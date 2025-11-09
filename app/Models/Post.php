@@ -21,6 +21,13 @@ class Post extends Model
         'user_id',
         'title',
         'content',
+        'full_content',
+        'is_active',
+        'is_paid',
+        'is_featured',
+        'company_name',
+        'company_logo',
+        'application_link',
     ];
 
     /**

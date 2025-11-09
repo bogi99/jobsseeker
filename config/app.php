@@ -17,6 +17,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Site Name
+    |--------------------------------------------------------------------------
+    |
+    | This value is the display name of your site, which will be used for
+    | branding and display purposes throughout the application.
+    |
+    */
+
+    'site_name' => env('SITE_NAME', 'JobRat'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------
     |
