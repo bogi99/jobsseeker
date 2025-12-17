@@ -24,6 +24,7 @@ class User extends Authenticatable
         'email',
         'usertype_id',
         'password',
+        'email_verified_at',
     ];
 
     /**
@@ -63,5 +64,33 @@ class User extends Authenticatable
     public function posts(): HasMany
     {
         return $this->hasMany(Post::class);
+    }
+
+    /**
+     * Check if the user can access the Filament admin panel.
+     */
+    public function canAccessPanel(\Filament\Panel $panel): bool
+    {
+        if ($panel->getId() === 'admin') {
+            return $this->isAdmin() || $this->isSuperAdmin();
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if the user is a superadmin.
+     */
+    public function isSuperAdmin(): bool
+    {
+        return $this->usertype?->name === 'superadmin';
+    }
+
+    /**
+     * Check if the user is an admin.
+     */
+    public function isAdmin(): bool
+    {
+        return $this->usertype?->name === 'admin';
     }
 }
