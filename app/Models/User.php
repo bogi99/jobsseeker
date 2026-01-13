@@ -75,6 +75,10 @@ class User extends Authenticatable
             return $this->isAdmin() || $this->isSuperAdmin();
         }
 
+        if ($panel->getId() === 'customer') {
+            return $this->isCustomer() || $this->isAdmin() || $this->isSuperAdmin();
+        }
+
         return true;
     }
 
@@ -92,5 +96,13 @@ class User extends Authenticatable
     public function isAdmin(): bool
     {
         return $this->usertype?->name === 'admin';
+    }
+
+    /**
+     * Check if the user is a customer.
+     */
+    public function isCustomer(): bool
+    {
+        return $this->usertype?->name === 'customer';
     }
 }
