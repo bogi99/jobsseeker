@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Facades\Storage;
 
 class Post extends Model
 {
@@ -31,6 +32,13 @@ class Post extends Model
     ];
 
     /**
+     * @var array<int, string>
+     */
+    protected $appends = [
+        'company_logo_url',
+    ];
+
+    /**
      * Get the user that owns the post.
      */
     public function user(): BelongsTo
@@ -44,5 +52,14 @@ class Post extends Model
     public function tags(): BelongsToMany
     {
         return $this->belongsToMany(Tag::class);
+    }
+
+    public function getCompanyLogoUrlAttribute(): ?string
+    {
+        if (! $this->company_logo) {
+            return null;
+        }
+
+        return Storage::disk('public')->url($this->company_logo);
     }
 }
