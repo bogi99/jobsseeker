@@ -12,7 +12,7 @@
                 <x-post-card :post="$post" />
             @endforeach
         </div>
-        <div class="mb-0">&nbsp;rr</div>
+        <div class="mb-0">&nbsp;</div>
     </div>
 
 </x-layout>

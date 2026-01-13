@@ -1,8 +1,8 @@
 <div class="bg-white rounded-lg shadow-md border border-gray-200 p-4 mb-4 hover:shadow-lg transition-shadow">
     <!-- Company Header -->
     <div class="flex items-center mb-3">
-        @if ($post->company_logo)
-            <img src="{{ $post->company_logo }}" alt="{{ $post->company_name }}"
+        @if ($post->company_logo_url)
+            <img src="{{ $post->company_logo_url }}" alt="{{ $post->company_name }}"
                 class="w-10 h-10 rounded-lg object-cover mr-3">
         @else
             <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
