@@ -54,6 +54,7 @@ class PostResource extends Resource
                             ->required()
                             ->maxLength(255),
                         Forms\Components\FileUpload::make('company_logo')
+                            ->disk('public')
                             ->image()
                             ->maxSize(2048)
                             ->directory('company-logos')
