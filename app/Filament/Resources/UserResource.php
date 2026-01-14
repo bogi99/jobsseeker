@@ -39,6 +39,10 @@ class UserResource extends Resource
                     ->preload(),
                 Forms\Components\DateTimePicker::make('email_verified_at')
                     ->label('Email Verified At'),
+                Forms\Components\Toggle::make('is_free')
+                    ->label('Free Posting')
+                    ->default(false)
+                    ->helperText('Allow this user to post for free'),
                 Forms\Components\TextInput::make('password')
                     ->password()
                     ->dehydrateStateUsing(fn (string $state): string => Hash::make($state))
@@ -75,6 +79,14 @@ class UserResource extends Resource
                     ->falseIcon('heroicon-o-x-circle')
                     ->trueColor('success')
                     ->falseColor('danger'),
+                Tables\Columns\IconColumn::make('is_free')
+                    ->label('Free')
+                    ->boolean()
+                    ->sortable()
+                    ->trueIcon('heroicon-o-check-circle')
+                    ->falseIcon('heroicon-o-x-circle')
+                    ->trueColor('success')
+                    ->falseColor('danger'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -95,6 +107,9 @@ class UserResource extends Resource
                 Tables\Filters\Filter::make('unverified')
                     ->query(fn (Builder $query): Builder => $query->whereNull('email_verified_at'))
                     ->label('Unverified Users'),
+                Tables\Filters\Filter::make('is_free')
+                    ->query(fn (Builder $query): Builder => $query->where('is_free', true))
+                    ->label('Free Posting'),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
