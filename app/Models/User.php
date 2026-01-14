@@ -25,6 +25,7 @@ class User extends Authenticatable
         'usertype_id',
         'password',
         'email_verified_at',
+        'is_free',
     ];
 
     /**
@@ -47,6 +48,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_free' => 'boolean',
         ];
     }
 
@@ -104,5 +106,13 @@ class User extends Authenticatable
     public function isCustomer(): bool
     {
         return $this->usertype?->name === 'customer';
+    }
+
+    /**
+     * Check if the user has a free account.
+     */
+    public function isFree(): bool
+    {
+        return (bool) $this->is_free;
     }
 }
