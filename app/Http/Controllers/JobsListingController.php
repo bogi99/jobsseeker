@@ -24,7 +24,7 @@ class JobsListingController extends Controller
         $query = Post::where('is_active', true)->with(['user', 'tags']);
 
         // Filter by tags if any selected (AND logic - posts must have ALL selected tags)
-        if (!empty($selectedTags)) {
+        if (! empty($selectedTags)) {
             foreach ($selectedTags as $tagName) {
                 $query->whereHas('tags', function ($tagQuery) use ($tagName) {
                     $tagQuery->where('name', $tagName);
@@ -50,7 +50,7 @@ class JobsListingController extends Controller
     public function show(Post $post)
     {
         // Only show active posts
-        if (!$post->is_active) {
+        if (! $post->is_active) {
             abort(404);
         }
 

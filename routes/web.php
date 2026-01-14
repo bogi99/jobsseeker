@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\Auth\CustomerLoginController;
 use App\Http\Controllers\Auth\CustomerRegistrationController;
-
 use App\Http\Controllers\JobsListingController;
 use App\Http\Controllers\WelcomeController;
 use Illuminate\Support\Facades\Route;

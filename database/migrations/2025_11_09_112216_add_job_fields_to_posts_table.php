@@ -27,7 +27,7 @@ return new class extends Migration
             $table->dropColumn([
                 'company_name',
                 'company_logo',
-                'application_link'
+                'application_link',
             ]);
         });
     }
