@@ -63,26 +63,26 @@
                     <label class="block text-sm font-medium text-slate-600">
                         Email ( required )
                         <input
-                            class="mt-1 w-full rounded-xl border border-slate-400 px-4 py-3 text-base text-slate-900 placeholder-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 text-xl"
+                            class="mt-1 w-full rounded-xl border border-slate-400 px-4 py-3  text-slate-900 placeholder-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 text-xl"
                             type="email" name="email" value="{{ old('email') }}" required />
                     </label>
 
                     <label class="block text-sm font-medium text-slate-600">
                         Password ( required )
                         <input
-                            class="mt-1 w-full rounded-xl border border-slate-400 px-4 py-3 text-base text-slate-900 placeholder-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 text-xl"
+                            class="mt-1 w-full rounded-xl border border-slate-400 px-4 py-3  text-slate-900 placeholder-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 text-xl"
                             type="password" name="password" required />
                     </label>
 
                     <label class="block text-sm font-medium text-slate-600">
                         Confirm password ( required )
                         <input
-                            class="mt-1 w-full rounded-xl border border-slate-400 px-4 py-3 text-base text-slate-900 placeholder-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 text-xl"
+                            class="mt-1 w-full rounded-xl border border-slate-400 px-4 py-3  text-slate-900 placeholder-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 text-xl"
                             type="password" name="password_confirmation" required />
                     </label>
 
                     <button
-                        class="w-full rounded-2xl bg-gradient-to-r from-sky-500 to-emerald-500 px-4 py-3 text-base font-semibold uppercase tracking-[0.2em] text-white transition hover:from-sky-600 hover:to-emerald-600"
+                        class="w-full rounded-2xl bg-linear-to-r from-sky-500 to-emerald-500 px-4 py-3  font-semibold uppercase tracking-[0.2em] text-white transition hover:from-sky-600 hover:to-emerald-600"
                         type="submit">
                         Create customer account
                     </button>
