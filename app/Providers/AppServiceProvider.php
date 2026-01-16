@@ -19,6 +19,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Register the Post observer for lifecycle handling of activation/pausing.
+        \App\Models\Post::observe(\App\Observers\PostObserver::class);
     }
 }

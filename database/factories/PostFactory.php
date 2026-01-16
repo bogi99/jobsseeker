@@ -17,7 +17,17 @@ class PostFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'user_id' => \App\Models\User::factory(),
+            'title' => $this->faker->sentence(6),
+            'content' => $this->faker->paragraph(),
+            'full_content' => null,
+            'is_active' => false,
+            'is_paid' => false,
+            'is_featured' => false,
+            'is_free' => false,
+            'payment_status' => 'pending',
+            'payment_intent_id' => null,
+            'company_name' => $this->faker->company(),
         ];
     }
 }

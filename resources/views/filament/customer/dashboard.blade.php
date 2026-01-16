@@ -38,10 +38,24 @@
             <p class="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">Ready to post?</p>
             <p class="text-sm text-slate-600">Launch a new job directly from the customer experience and keep the public
                 board updated.</p>
-            <x-filament::button tag="a"
-                href="{{ \App\Filament\Customer\Resources\PostResource::getUrl('create') }}" color="primary">
-                Create a job posting
-            </x-filament::button>
+            <div class="flex gap-3">
+                @php $isFree = \Filament\Facades\Filament::auth()->user()?->is_free ?? false; @endphp
+
+                @unless ($isFree)
+                    <x-filament::button tag="a"
+                        href="{{ \App\Filament\Customer\Resources\PostResource::getUrl('create') }}" color="primary">
+                        Create a job posting
+                    </x-filament::button>
+                @endunless
+
+                <!-- Shortcut to create a free posting (visible only for free users) -->
+                @if ($isFree)
+                    <x-filament::button tag="a" href="{{ route('customer.posts.create.free') }}"
+                        class="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 focus:ring-2 focus:ring-offset-2 focus:ring-red-500 text-white text-sm font-semibold py-2 px-4 rounded-md shadow-sm">
+                        Create a free posting
+                    </x-filament::button>
+                @endif
+            </div>
         </x-filament::card>
     </div>
 </x-filament::page>

@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Customer\Pages\CreateFreePost as CustomerCreateFreePost;
 use App\Filament\Customer\Pages\CreatePost as CustomerCreatePost;
 use App\Filament\Customer\Pages\Dashboard as CustomerDashboard;
 use App\Filament\Customer\Resources\PostResource;
@@ -27,6 +28,11 @@ class CustomerPanelProvider extends PanelProvider
             ->id('customer')
             ->path('customer')
             ->login()
+            // ->brandLogo(asset('images/logo.png'))
+            // ->brandLogoHeight('55px')
+            // ->brandName('JobRat Customer Panel')
+            ->brandLogo(fn () => view('filament.customer.logo'))
+            ->brandLogoHeight('55px') // adjust as needed
             ->colors([
                 'primary' => Color::Blue,
             ])
@@ -36,6 +42,7 @@ class CustomerPanelProvider extends PanelProvider
             ->pages([
                 CustomerDashboard::class,
                 CustomerCreatePost::class,
+                CustomerCreateFreePost::class,
             ])
             ->middleware([
                 EncryptCookies::class,

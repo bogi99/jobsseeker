@@ -31,5 +31,7 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <!-- Suppress deprecation notices during tests to avoid noisy output from platform/PDO constants -->
+        <ini name="error_reporting" value="-1 &amp; ~E_DEPRECATED &amp; ~E_USER_DEPRECATED"/>
     </php>
 </phpunit>

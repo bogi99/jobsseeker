@@ -26,6 +26,11 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
+            // ->brandLogo(asset('images/logo.png'))
+            // ->brandLogoHeight('60px')
+            ->brandLogo(fn () => view('filament.admin.logo'))
+            ->brandLogoHeight('55px') // optional, adjust as needed
+            ->brandName('JobRat Admin Panel') // still useful as fallback/alt
             ->login()
             ->colors([
                 'primary' => Color::Amber,
@@ -54,6 +59,7 @@ class AdminPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+                \App\Http\Middleware\EnsureAdminPanelAccess::class,
             ])
             ->authMiddleware([
                 Authenticate::class,
