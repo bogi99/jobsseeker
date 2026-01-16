@@ -27,6 +27,14 @@ class PostResource extends Resource
     {
         return $form
             ->schema([
+                Forms\Components\Placeholder::make('free_notice')
+                    ->content('You are creating a <strong>free</strong> posting. The "Paid job" option is disabled and this post will be marked as free.')
+                    ->visible(fn (): bool => (bool) request()->query('free'))
+                    ->columnSpanFull(),
+                // Track whether this is a free flow via session (set by middleware on the free route)
+                Forms\Components\Hidden::make('is_free')
+                    ->default(fn (): bool => (bool) session('customer_free_flow', false))
+                    ->dehydrated(true),
                 Forms\Components\Hidden::make('user_id')
                     ->default(fn (): ?int => Auth::id())
                     ->required(),
@@ -64,7 +72,8 @@ class PostResource extends Resource
                             ->label('Active')
                             ->default(true),
                         Forms\Components\Toggle::make('is_paid')
-                            ->label('Paid job'),
+                            ->label('Paid job')
+                            ->hidden(fn (): bool => (bool) request()->query('free')),
                         Forms\Components\Toggle::make('is_featured')
                             ->label('Featured job'),
                     ])
@@ -129,6 +138,19 @@ class PostResource extends Resource
             'create' => Pages\CreatePost::route('/create'),
             'edit' => Pages\EditPost::route('/{record}/edit'),
         ];
+    }
+
+    public static function getNavigationItems(): array
+    {
+        $items = parent::getNavigationItems();
+
+        // Add a conditional "Create free posting" shortcut under the Customer group
+        $items[] = \Filament\Navigation\NavigationItem::make('Create free posting')
+            ->group(static::getNavigationGroup())
+            ->url(route('customer.posts.create.free'))
+            ->visible(fn (): bool => (bool) (\Filament\Facades\Filament::auth()->user()?->is_free ?? false));
+
+        return $items;
     }
 
     public static function getEloquentQuery(): Builder
