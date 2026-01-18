@@ -12,6 +12,8 @@ Route::view('/privacy', 'privacy')->name('privacy');
 
 Route::view('/terms', 'terms')->name('terms');
 
+Route::view('/about', 'about')->name('about');
+
 Route::get('/customer/login', [CustomerLoginController::class, 'create'])
     ->name('filament.customer.auth.login');
 Route::post('/customer/login', [CustomerLoginController::class, 'store'])
