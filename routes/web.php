@@ -8,6 +8,20 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [WelcomeController::class, 'index'])->name('welcome');
 
+// Temporary: catch POSTs to root to detect misconfigured webhook endpoints (logs and returns 200)
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+
+Route::post('/', function (Request $request) {
+    Log::warning('Received POST to root — likely misconfigured webhook endpoint', [
+        'ip' => $request->ip(),
+        'headers' => array_intersect_key($request->headers->all(), array_flip(['stripe-signature', 'content-type'])),
+        'body' => substr($request->getContent(), 0, 2000),
+    ]);
+
+    return response('OK', 200);
+})->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class);
+
 Route::view('/privacy', 'privacy')->name('privacy');
 
 Route::view('/terms', 'terms')->name('terms');
@@ -42,12 +56,16 @@ Route::post('/webhooks/stripe', [\App\Http\Controllers\StripeWebhookController::
     ->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class)
     ->name('webhooks.stripe');
 
-// Payment success callback (placeholder)
-Route::get('/posts/payment/success', function () {
-    return response('Payment success', 200);
-})->name('posts.payment.success');
+// Helpful fallback to catch non-POST deliveries (Stripe mistakenly configured or manual checks).
+// Only accept non-POST methods on the fallback route so real webhooks (POST) are handled
+// by the dedicated controller above. The fallback will help diagnose misconfigured
+// webhook endpoints when Stripe uses the wrong HTTP method.
+Route::match(['get', 'head', 'put', 'patch', 'delete', 'options'], '/webhooks/stripe', function (\Illuminate\Http\Request $request) {
+    \Illuminate\Support\Facades\Log::warning('Webhook endpoint received non-POST request', ['method' => $request->method(), 'ip' => $request->ip()]);
 
-// Minimal success URL for Stripe to redirect to after payment
-Route::get('/posts/payment/success', function (\Illuminate\Http\Request $request) {
-    return response('Payment success', 200);
-})->name('posts.payment.success');
+    return response('Method not allowed. Stripe webhooks must POST to this endpoint.', 405);
+});
+
+// Payment success callback - verify Stripe session and activate post if possible
+Route::get('/posts/payment/success', [\App\Http\Controllers\PostPaymentController::class, 'success'])
+    ->name('posts.payment.success');

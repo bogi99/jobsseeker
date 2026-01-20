@@ -35,6 +35,9 @@ return [
         'currency' => env('STRIPE_CURRENCY', 'usd'),
         'price_post' => (int) env('STRIPE_PRICE_POST', 5000),
         'price_post_boost' => (int) env('STRIPE_PRICE_POST_BOOST', 9000),
+        // Optional: static hosted Stripe Buy links (useful for Buy Links)
+        'hosted_post_url' => env('STRIPE_HOSTED_POST_URL'),
+        'hosted_post_boost_url' => env('STRIPE_HOSTED_POST_BOOST_URL'),
     ],
 
     'slack' => [

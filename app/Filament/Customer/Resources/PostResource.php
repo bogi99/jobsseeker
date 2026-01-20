@@ -66,24 +66,14 @@ class PostResource extends Resource
                             ->label('Application URL'),
                     ])
                     ->columns(2),
-                Forms\Components\Section::make('Visibility')
-                    ->schema([
-                        Forms\Components\Toggle::make('is_active')
-                            ->label('Active')
-                            ->default(true),
-                        Forms\Components\Toggle::make('is_paid')
-                            ->label('Paid job')
-                            ->hidden(fn (): bool => (bool) request()->query('free')),
-                        Forms\Components\Toggle::make('is_featured')
-                            ->label('Featured job'),
-                    ])
-                    ->columns(3),
+
                 Forms\Components\Select::make('tags')
                     ->relationship('tags', 'name')
                     ->multiple()
                     ->searchable()
                     ->preload()
                     ->columnSpanFull(),
+
             ]);
     }
 
