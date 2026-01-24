@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use App\Models\UserType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 class AdminPanelAccessTest extends TestCase
@@ -20,9 +21,35 @@ class AdminPanelAccessTest extends TestCase
         // Sanity check: ensure factory created an admin user correctly
         $this->assertTrue($user->fresh()->isAdmin());
 
-        $this->actingAs($user)
-            ->get(route('filament.admin.pages.dashboard'))
+        // Ensure the Filament auth guard recognizes the user (tests don't have a POST login route).
+        $this->actingAs($user, 'web');
+        \Filament\Facades\Filament::auth()->login($user);
+
+        $this->get(route('filament.admin.pages.dashboard'))
             ->assertStatus(200);
+    }
+
+    public function test_debug_ensure_admin_middleware_sees_user()
+    {
+        Route::middleware([\App\Http\Middleware\EnsureAdminPanelAccess::class])->get('/_test-ensure', function () {
+            $user = auth()->user();
+
+            return response()->json([
+                'auth_user' => $user?->id,
+                'auth_usertype' => $user?->usertype?->name,
+            ]);
+        });
+
+        $adminType = UserType::where('name', 'admin')->first();
+
+        $user = User::factory()->create(['usertype_id' => $adminType->id]);
+
+        $this->actingAs($user, 'web');
+
+        $response = $this->get('/_test-ensure');
+
+        $response->assertStatus(200)
+            ->assertJsonFragment(['auth_usertype' => 'admin']);
     }
 
     public function test_superadmin_user_can_access_admin_panel()
@@ -31,8 +58,11 @@ class AdminPanelAccessTest extends TestCase
 
         $user = User::factory()->create(['usertype_id' => $superType->id]);
 
-        $this->actingAs($user)
-            ->get(route('filament.admin.pages.dashboard'))
+        // Ensure the Filament auth guard recognizes the user (tests don't have a POST login route).
+        $this->actingAs($user, 'web');
+        \Filament\Facades\Filament::auth()->login($user);
+
+        $this->get(route('filament.admin.pages.dashboard'))
             ->assertStatus(200);
     }
 
