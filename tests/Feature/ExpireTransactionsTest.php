@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Filament\Customer\Resources\PostResource\Pages\CreatePost;
-use App\Models\Post;
 use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -52,8 +51,10 @@ class ExpireTransactionsTest extends TestCase
         // Bind a mock Stripe client so Create & Pay succeeds
         $mockSession = (object) ['id' => 'cs_new', 'url' => 'https://checkout.stripe/checkout', 'payment_intent' => 'pi_new'];
 
-        $mockSessions = new class($mockSession) {
+        $mockSessions = new class($mockSession)
+        {
             public $mockSession;
+
             public function __construct($mockSession)
             {
                 $this->mockSession = $mockSession;
@@ -65,16 +66,20 @@ class ExpireTransactionsTest extends TestCase
             }
         };
 
-        $mockCheckout = new class($mockSessions) {
+        $mockCheckout = new class($mockSessions)
+        {
             public $sessions;
+
             public function __construct($sessions)
             {
                 $this->sessions = $sessions;
             }
         };
 
-        $mockClient = new class($mockCheckout) {
+        $mockClient = new class($mockCheckout)
+        {
             public $checkout;
+
             public function __construct($checkout)
             {
                 $this->checkout = $checkout;

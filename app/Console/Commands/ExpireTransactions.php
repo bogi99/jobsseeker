@@ -23,7 +23,7 @@ class ExpireTransactions extends Command
             ->where('expires_at', '<', $now)
             ->get();
 
-        $this->info('Found ' . $transactions->count() . ' expired pending transactions');
+        $this->info('Found '.$transactions->count().' expired pending transactions');
 
         if ($transactions->isEmpty()) {
             return 0;

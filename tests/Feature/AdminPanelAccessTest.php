@@ -5,8 +5,8 @@ namespace Tests\Feature;
 use App\Models\User;
 use App\Models\UserType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 class AdminPanelAccessTest extends TestCase
