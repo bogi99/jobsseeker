@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\UserType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 use Tests\TestCase;
 
 class AdminPanelAccessTest extends TestCase
@@ -16,7 +17,8 @@ class AdminPanelAccessTest extends TestCase
     {
         $adminType = UserType::where('name', 'admin')->first();
 
-        $user = User::factory()->create(['usertype_id' => $adminType->id]);
+        /** @var \App\Models\User $user */
+        $user = User::factory()->createOne(['usertype_id' => $adminType->id]);
 
         // Sanity check: ensure factory created an admin user correctly
         $this->assertTrue($user->fresh()->isAdmin());
@@ -32,7 +34,7 @@ class AdminPanelAccessTest extends TestCase
     public function test_debug_ensure_admin_middleware_sees_user()
     {
         Route::middleware([\App\Http\Middleware\EnsureAdminPanelAccess::class])->get('/_test-ensure', function () {
-            $user = auth()->user();
+            $user = Auth::user();
 
             return response()->json([
                 'auth_user' => $user?->id,
@@ -42,7 +44,8 @@ class AdminPanelAccessTest extends TestCase
 
         $adminType = UserType::where('name', 'admin')->first();
 
-        $user = User::factory()->create(['usertype_id' => $adminType->id]);
+        /** @var \App\Models\User $user */
+        $user = User::factory()->createOne(['usertype_id' => $adminType->id]);
 
         $this->actingAs($user, 'web');
 
@@ -56,7 +59,8 @@ class AdminPanelAccessTest extends TestCase
     {
         $superType = UserType::where('name', 'superadmin')->first();
 
-        $user = User::factory()->create(['usertype_id' => $superType->id]);
+        /** @var \App\Models\User $user */
+        $user = User::factory()->createOne(['usertype_id' => $superType->id]);
 
         // Ensure the Filament auth guard recognizes the user (tests don't have a POST login route).
         $this->actingAs($user, 'web');
@@ -70,7 +74,8 @@ class AdminPanelAccessTest extends TestCase
     {
         $customerType = UserType::where('name', 'customer')->first();
 
-        $user = User::factory()->create(['usertype_id' => $customerType->id]);
+        /** @var \App\Models\User $user */
+        $user = User::factory()->createOne(['usertype_id' => $customerType->id]);
 
         $this->actingAs($user)
             ->get(route('filament.admin.pages.dashboard'))
