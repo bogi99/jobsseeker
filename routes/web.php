@@ -22,11 +22,11 @@ Route::post('/', function (Request $request) {
     return response('OK', 200);
 })->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class);
 
-Route::view('/privacy', 'privacy')->name('privacy');
+Route::get('/privacy', [\App\Http\Controllers\PrivacyController::class, 'index'])->name('privacy');
 
-Route::view('/terms', 'terms')->name('terms');
+Route::get('/terms', [\App\Http\Controllers\TermsController::class, 'index'])->name('terms');
 
-Route::view('/about', 'about')->name('about');
+Route::get('/about', [\App\Http\Controllers\AboutController::class, 'index'])->name('about');
 
 Route::get('/customer/login', [CustomerLoginController::class, 'create'])
     ->name('filament.customer.auth.login');

@@ -1,4 +1,4 @@
-<x-layout>
+<x-layout :meta-keywords="$metaKeywords">
 
 
     <div class="bg-blue-200 grow flex flex-col">

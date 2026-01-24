@@ -8,6 +8,13 @@ use Illuminate\Http\Request;
 class JobsListingController extends Controller
 {
     /**
+     * Default SEO keywords for pages using this controller.
+     *
+     * @var list<string>
+     */
+    protected array $defaultKeywords = ['Jobs', 'Search', 'JobRat', 'Job Listings', 'Career', 'Employment', 'Hiring'];
+
+    /**
      * Display a listing of active job posts.
      */
     public function index(Request $request)
@@ -41,7 +48,10 @@ class JobsListingController extends Controller
         // Get all available tags for the filter
         $allTags = \App\Models\Tag::orderBy('name')->get();
 
-        return view('jobs.index', compact('jobs', 'perPage', 'selectedTags', 'allTags'));
+        // Provide the paginated collection items to the view composer as 'activePosts'
+        $activePosts = $jobs->getCollection();
+
+        return view('jobs.index', ['jobs' => $jobs, 'perPage' => $perPage, 'selectedTags' => $selectedTags, 'allTags' => $allTags, 'activePosts' => $activePosts, 'defaultKeywords' => $this->defaultKeywords]);
     }
 
     /**
@@ -57,6 +67,9 @@ class JobsListingController extends Controller
         // Load relationships
         $post->load(['user', 'tags']);
 
-        return view('jobs.show', compact('post'));
+        // Provide the single post as 'activePosts' for the composer to generate keywords
+        $activePosts = collect([$post]);
+
+        return view('jobs.show', ['post' => $post, 'activePosts' => $activePosts, 'defaultKeywords' => $this->defaultKeywords]);
     }
 }

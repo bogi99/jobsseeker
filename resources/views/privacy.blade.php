@@ -1,4 +1,4 @@
-<x-layout>
+<x-layout :meta-keywords="$metaKeywords">
     <div class="bg-blue-200">
         <div class="px-4 py-6">
             <div class="max-w-4xl mx-auto">
