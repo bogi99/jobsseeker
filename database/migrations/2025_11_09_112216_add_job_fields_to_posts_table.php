@@ -12,7 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('posts', function (Blueprint $table) {
-            $table->string('company_name')->default('Unknown Company')->after('full_content');
+            // `full_content` is added by a later migration — position after `content`
+            // so this migration can run regardless of `full_content` ordering.
+            $table->string('company_name')->default('Unknown Company')->after('content');
             $table->string('company_logo')->nullable()->after('company_name');
             $table->string('application_link')->nullable()->after('company_logo');
         });
