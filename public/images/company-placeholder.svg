@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="80" viewBox="0 0 120 80" role="img"
+    aria-label="Company placeholder">
+    <rect width="120" height="80" fill="#F3F4F6" rx="8" />
+    <g fill="#9CA3AF">
+        <rect x="14" y="18" width="30" height="18" rx="3" />
+        <rect x="54" y="18" width="52" height="8" rx="3" />
+        <rect x="54" y="32" width="52" height="6" rx="3" />
+    </g>
+</svg>

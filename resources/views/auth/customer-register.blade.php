@@ -17,7 +17,7 @@
                     </div>
                     <div class="flex items-center gap-2">
                         <span class="h-2 w-2 rounded-full bg-sky-300"></span>
-                        <p>One-click onboarding and instant verification</p>
+                        <p>One-click onboarding — we'll email a verification link to activate your account</p>
                     </div>
                     <div class="flex items-center gap-2">
                         <span class="h-2 w-2 rounded-full bg-indigo-300"></span>

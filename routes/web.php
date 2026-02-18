@@ -33,11 +33,33 @@ Route::get('/customer/login', [CustomerLoginController::class, 'create'])
 Route::post('/customer/login', [CustomerLoginController::class, 'store'])
     ->name('customer.login.store');
 
+// Provide a default `/login` route so Laravel's `auth` middleware can redirect
+// unauthenticated users to a working login page (used by email verification flow).
+Route::get('/login', [CustomerLoginController::class, 'create'])->name('login');
+
 Route::get('/customer/register', [CustomerRegistrationController::class, 'create'])
     ->name('customer.register');
 Route::post('/customer/register', [CustomerRegistrationController::class, 'store'])
     ->name('customer.register.store');
 
+// Email verification routes (Laravel-style)
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
+
+Route::get('/email/verify', function () {
+    return view('auth.verify-email');
+})->middleware('auth')->name('verification.notice');
+
+Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
+    $request->fulfill();
+
+    return redirect()->route('jobs.index')->with('status', 'Your email has been verified.');
+})->middleware(['auth', 'signed'])->name('verification.verify');
+
+Route::post('/email/verification-notification', function (Request $request) {
+    $request->user()->sendEmailVerificationNotification();
+
+    return back()->with('status', 'verification-link-sent');
+})->middleware(['auth', 'throttle:6,1'])->name('verification.send');
 // Jobs
 Route::get('/jobs', [JobsListingController::class, 'index'])->name('jobs.index');
 Route::get('/jobs/{post}', [JobsListingController::class, 'show'])->name('jobs.show');

@@ -79,4 +79,26 @@ class PostObserver
             return;
         }
     }
+
+    /**
+     * When a post is deleted, remove its uploaded company logo from the public disk
+     * to avoid orphaned files.
+     */
+    public function deleted(Post $post): void
+    {
+        if (! $post->company_logo) {
+            return;
+        }
+
+        // Skip external URLs / data URIs
+        if (preg_match('/^(https?:)?\/\//i', $post->company_logo) || str_starts_with($post->company_logo, 'data:')) {
+            return;
+        }
+
+        $disk = \Illuminate\Support\Facades\Storage::disk('public');
+
+        if ($disk->exists($post->company_logo)) {
+            $disk->delete($post->company_logo);
+        }
+    }
 }

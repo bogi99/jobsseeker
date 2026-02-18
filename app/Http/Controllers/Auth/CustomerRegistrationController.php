@@ -38,13 +38,14 @@ class CustomerRegistrationController extends Controller
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'usertype_id' => $customerType->id,
-            'email_verified_at' => now(),
         ]);
 
+        // Keep the user logged in, but require email verification for protected actions.
         Auth::login($user);
 
-        return redirect()
-            ->route('jobs.index')
-            ->with('status', 'Welcome aboard! Your customer account is ready.');
+        // Send verification email (Mailtrap/MailPit will capture it in local/dev)
+        $user->sendEmailVerificationNotification();
+
+        return redirect()->route('verification.notice');
     }
 }
