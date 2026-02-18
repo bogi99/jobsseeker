@@ -83,7 +83,20 @@ class Post extends Model
             return null;
         }
 
-        return Storage::disk('public')->url($this->company_logo);
+        // If value is already an absolute URL (http/https) or a data URI, return as-is
+        if (preg_match('/^(https?:)?\/\//i', $this->company_logo) || str_starts_with($this->company_logo, 'data:')) {
+            return $this->company_logo;
+        }
+
+        $disk = Storage::disk('public');
+
+        // If the file exists on the configured public disk, return its URL
+        if ($disk->exists($this->company_logo)) {
+            return $disk->url($this->company_logo);
+        }
+
+        // Fallback to a local placeholder asset so the UI never shows a broken image
+        return asset('images/company-placeholder.svg');
     }
 
     /**
