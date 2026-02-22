@@ -23,6 +23,10 @@ class FreePostCreationTest extends TestCase
         $response = $this->get(route('customer.posts.create.free'));
         $response->assertRedirect(route('filament.customer.resources.posts.create'));
 
+        // Also verify the new /customer/create path redirects to the same place
+        $response = $this->get('/customer/create');
+        $response->assertRedirect(route('filament.customer.resources.posts.create'));
+
         // Follow the redirect so the flashed session key is available to the Livewire form.
         $this->get(route('filament.customer.resources.posts.create'));
 
@@ -56,6 +60,9 @@ class FreePostCreationTest extends TestCase
         // Visiting the free route is forbidden for non-free users
         $this->get(route('customer.posts.create.free'))
             ->assertStatus(403);
+
+        // Also ensure the new /customer/create path is forbidden for non-free users
+        $this->get('/customer/create')->assertStatus(403);
 
         // Attempting to create a post with `is_free` flagged directly on the regular create
         // flow should still succeed but the server must strip the `is_free` flag.

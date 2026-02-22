@@ -67,7 +67,7 @@ Route::get('/jobs/{post}', [JobsListingController::class, 'show'])->name('jobs.s
 // Free posting shortcut – protects the route with auth + a middleware that ensures the user
 // is allowed to create free postings. When allowed, it marks the session so the create form
 // knows to operate in the free flow and redirects to the Filament resource create page.
-Route::get('/customer/free/create', function () {
+Route::get('/customer/create', function () {
     // Redirect explicitly to the customer panel's create route (avoid defaulting to admin)
     return redirect()->route('filament.customer.resources.posts.create');
 })->middleware(['auth', \App\Http\Middleware\EnsureUserHasFreeAccess::class])
