@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Filament\Resources\TagResource\Pages;
+namespace App\Filament\Admin\TagResource\Pages;
 
-use App\Filament\Resources\TagResource;
+use App\Filament\Admin\TagResource;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateTag extends CreateRecord

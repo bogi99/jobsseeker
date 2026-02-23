@@ -82,6 +82,125 @@ class PaidPostFlowTest extends TestCase
         ]);
     }
 
+    public function test_editing_draft_triggers_checkout_and_updates_record()
+    {
+        $user = User::factory()->create(['is_free' => false]);
+        $this->actingAs($user);
+
+        // reuse stripe mock from above
+        $mockSession = (object) ['url' => 'https://checkout.stripe/checkout', 'payment_intent' => 'pi_test'];
+        $mockSessions = new class($mockSession)
+        {
+            public $mockSession;
+
+            public function __construct($mockSession)
+            {
+                $this->mockSession = $mockSession;
+            }
+
+            public function create($args)
+            {
+                return $this->mockSession;
+            }
+        };
+        $mockCheckout = new class($mockSessions)
+        {
+            public $sessions;
+
+            public function __construct($sessions)
+            {
+                $this->sessions = $sessions;
+            }
+        };
+        $mockClient = new class($mockCheckout)
+        {
+            public $checkout;
+
+            public function __construct($checkout)
+            {
+                $this->checkout = $checkout;
+            }
+        };
+        $this->app->instance(\Stripe\StripeClient::class, $mockClient);
+
+        $post = Post::factory()->create([
+            'user_id' => $user->id,
+            'is_free' => false,
+            'is_paid' => false,
+            'is_active' => false,
+            'payment_status' => 'pending',
+        ]);
+
+        Livewire::test(\App\Filament\Customer\Resources\PostResource\Pages\EditPost::class, ['record' => $post->id])
+            ->fillForm([
+                'title' => 'Edited title',
+                'content' => 'Edited content',
+                'company_name' => 'Example Co',
+                'user_id' => $user->id,
+                'is_paid' => true,
+                'is_featured' => false,
+                'is_active' => true,
+            ])
+            ->call('createAndPay')
+            ->assertRedirect('https://checkout.stripe/checkout');
+
+        $this->assertDatabaseHas('posts', [
+            'id' => $post->id,
+            'title' => 'Edited title',
+            'payment_status' => 'pending',
+            'is_active' => false,
+        ]);
+    }
+
+    public function test_editing_draft_can_use_hosted_link()
+    {
+        $user = User::factory()->create(['is_free' => false]);
+        $this->actingAs($user);
+
+        $post = Post::factory()->create([
+            'user_id' => $user->id,
+            'is_free' => false,
+            'is_paid' => false,
+            'is_active' => false,
+            'payment_status' => 'pending',
+        ]);
+
+        Livewire::test(\App\Filament\Customer\Resources\PostResource\Pages\EditPost::class, ['record' => $post->id])
+            ->fillForm([
+                'title' => 'Hosted edit',
+                'content' => 'Hosted content',
+                'company_name' => 'Example Co',
+                'user_id' => $user->id,
+            ])
+            ->call('payHosted', false)
+            ->assertRedirect('https://checkout.stripe/checkout');
+
+        $this->assertDatabaseHas('posts', [
+            'id' => $post->id,
+            'title' => 'Hosted edit',
+        ]);
+    }
+
+    public function test_editing_paid_post_hides_payment_buttons()
+    {
+        $user = User::factory()->create(['is_free' => false]);
+        $this->actingAs($user);
+
+        $post = Post::factory()->create([
+            'user_id' => $user->id,
+            'is_free' => false,
+            'is_paid' => true,
+            'is_active' => true,
+            'payment_status' => 'paid',
+        ]);
+
+        Livewire::test(\App\Filament\Customer\Resources\PostResource\Pages\EditPost::class, ['record' => $post->id])
+            ->assertDontSee('Pay & Save')
+            ->assertDontSee('Pay + Boost')
+            ->assertDontSee('Pay to post')
+            ->assertDontSee('Pay + Boost (Hosted)');
+    }
+
     public function test_webhook_marks_post_paid_active_and_boosted()
     {
         $user = User::factory()->create();
@@ -417,5 +536,6 @@ class PaidPostFlowTest extends TestCase
 
         $this->assertDatabaseMissing('posts', ['title' => 'Should not create']);
         $this->assertEquals(1, \App\Models\Transaction::where('user_id', $user->id)->count());
+
     }
 }
