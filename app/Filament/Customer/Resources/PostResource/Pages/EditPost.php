@@ -7,6 +7,7 @@ use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Arr;
 
 class EditPost extends EditRecord
 {
@@ -58,7 +59,7 @@ class EditPost extends EditRecord
                 'is_active' => false,
                 'payment_status' => 'pending',
             ],
-            \Arr::only($state, [
+            Arr::only($state, [
                 'title',
                 'content',
                 'full_content',
