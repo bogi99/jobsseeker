@@ -6,6 +6,8 @@ use App\Filament\Customer\Resources\PostResource\Pages;
 use App\Models\Post;
 use Filament\Forms;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -15,17 +17,17 @@ class PostResource extends Resource
 {
     protected static ?string $model = Post::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-briefcase';
+    protected static \BackedEnum|string|null $navigationIcon = 'heroicon-o-briefcase';
 
-    protected static ?string $navigationGroup = 'Customer';
+    protected static \UnitEnum|string|null $navigationGroup = 'Customer';
 
     protected static ?string $navigationLabel = 'My posts';
 
     protected static ?int $navigationSort = 2;
 
-    public static function form(Forms\Form $form): Forms\Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
+        return $schema
             ->schema([
                 Forms\Components\Placeholder::make('free_notice')
                     ->content('You are creating a <strong>free</strong> posting. The "Paid job" option is disabled and this post will be marked as free.')
@@ -49,7 +51,7 @@ class PostResource extends Resource
                     ->label('Full description')
                     ->nullable()
                     ->columnSpanFull(),
-                Forms\Components\Section::make('Company information')
+                Section::make('Company information')
                     ->schema([
                         Forms\Components\TextInput::make('company_name')
                             ->required()

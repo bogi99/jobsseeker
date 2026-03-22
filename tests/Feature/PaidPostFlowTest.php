@@ -173,7 +173,7 @@ class PaidPostFlowTest extends TestCase
                 'user_id' => $user->id,
             ])
             ->call('payHosted', false)
-            ->assertRedirect('https://checkout.stripe/checkout');
+            ->assertRedirectContains(config('services.stripe.hosted_post_url'));
 
         $this->assertDatabaseHas('posts', [
             'id' => $post->id,

@@ -6,11 +6,11 @@ use Filament\Pages\Page;
 
 class CreateFreePost extends Page
 {
-    protected static string $view = 'filament.customer.create-post-free';
+    protected string $view = 'filament.customer.create-post-free';
 
-    protected static ?string $navigationIcon = 'heroicon-o-plus';
+    protected static \BackedEnum|string|null $navigationIcon = 'heroicon-o-plus';
 
-    protected static ?string $navigationGroup = 'Customer';
+    protected static \UnitEnum|string|null $navigationGroup = 'Customer';
 
     protected static ?string $navigationLabel = 'Create free posting';
 

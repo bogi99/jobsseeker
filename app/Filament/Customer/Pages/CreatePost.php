@@ -7,11 +7,11 @@ use Filament\Pages\Page;
 
 class CreatePost extends Page
 {
-    protected static string $view = 'filament.customer.create-post';
+    protected string $view = 'filament.customer.create-post';
 
-    protected static ?string $navigationIcon = 'heroicon-o-plus';
+    protected static \BackedEnum|string|null $navigationIcon = 'heroicon-o-plus';
 
-    protected static ?string $navigationGroup = 'Customer';
+    protected static \UnitEnum|string|null $navigationGroup = 'Customer';
 
     protected static ?string $navigationLabel = 'Create new posting';
 

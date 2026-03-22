@@ -5,8 +5,8 @@ namespace App\Filament\Admin;
 use App\Filament\Admin\UserTypeResource\Pages;
 use App\Models\UserType;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 
@@ -14,15 +14,15 @@ class UserTypeResource extends Resource
 {
     protected static ?string $model = UserType::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-shield-check';
+    protected static \BackedEnum|string|null $navigationIcon = 'heroicon-o-user-group';
 
-    protected static ?string $navigationGroup = 'User Management';
+    protected static \UnitEnum|string|null $navigationGroup = 'User Management';
 
     protected static ?int $navigationSort = 1;
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
+        return $schema
             ->schema([
                 Forms\Components\TextInput::make('name')
                     ->required()

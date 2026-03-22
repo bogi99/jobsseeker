@@ -5,8 +5,9 @@ namespace App\Filament\Admin;
 use App\Filament\Admin\PostResource\Pages;
 use App\Models\Post;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 
@@ -14,17 +15,17 @@ class PostResource extends Resource
 {
     protected static ?string $model = Post::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-document-text';
+    protected static \BackedEnum|string|null $navigationIcon = 'heroicon-o-document-text';
 
-    protected static ?string $navigationGroup = 'Content Management';
+    protected static \UnitEnum|string|null $navigationGroup = 'Content Management';
 
     protected static ?int $navigationSort = 2;
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
+        return $schema
             ->schema([
-                Forms\Components\Section::make('Post Information')
+                Section::make('Post Information')
                     ->schema([
                         Forms\Components\Select::make('user_id')
                             ->relationship('user', 'name')
@@ -48,7 +49,7 @@ class PostResource extends Resource
                     ])
                     ->columns(2),
 
-                Forms\Components\Section::make('Company Information')
+                Section::make('Company Information')
                     ->schema([
                         Forms\Components\TextInput::make('company_name')
                             ->required()
@@ -67,7 +68,7 @@ class PostResource extends Resource
                     ])
                     ->columns(2),
 
-                Forms\Components\Section::make('Tags')
+                Section::make('Tags')
                     ->schema([
                         Forms\Components\Select::make('tags')
                             ->relationship('tags', 'name')
@@ -77,7 +78,7 @@ class PostResource extends Resource
                             ->label('Tags'),
                     ]),
 
-                Forms\Components\Section::make('Status')
+                Section::make('Status')
                     ->schema([
                         Forms\Components\Toggle::make('is_active')
                             ->default(true)

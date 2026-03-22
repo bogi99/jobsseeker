@@ -8,11 +8,11 @@ use Illuminate\Support\Facades\Auth;
 
 class Dashboard extends Page
 {
-    protected static string $view = 'filament.customer.dashboard';
+    protected string $view = 'filament.customer.dashboard';
 
-    protected static ?string $navigationIcon = 'heroicon-o-home';
+    protected static \BackedEnum|string|null $navigationIcon = 'heroicon-o-home';
 
-    protected static ?string $navigationGroup = 'Customer';
+    protected static \UnitEnum|string|null $navigationGroup = 'Customer';
 
     protected static ?string $navigationLabel = 'Customer Panel';
 
