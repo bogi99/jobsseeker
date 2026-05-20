@@ -1,6 +1,13 @@
 <?php
-
 namespace App\Filament\Admin;
+
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+
+
+
 
 use App\Filament\Admin\UserTypeResource\Pages;
 use App\Models\UserType;
@@ -62,13 +69,13 @@ class UserTypeResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make()
+                EditAction::make(),
+                DeleteAction::make()
                     ->requiresConfirmation(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()
+                BulkActionGroup::make([
+                    DeleteBulkAction::make()
                         ->requiresConfirmation(),
                 ]),
             ])

@@ -1,6 +1,13 @@
 <?php
-
 namespace App\Filament\Admin;
+
+use Filament\Actions\ViewAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+
+
 
 use App\Filament\Admin\PostResource\Pages;
 use App\Models\Post;
@@ -154,13 +161,13 @@ class PostResource extends Resource
                     ->falseLabel('Not featured'),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                ViewAction::make(),
+                EditAction::make(),
+                DeleteAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()
+                BulkActionGroup::make([
+                    DeleteBulkAction::make()
                         ->requiresConfirmation(),
                 ]),
             ])
