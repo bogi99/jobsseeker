@@ -17,7 +17,7 @@ class PostResource extends Resource
 
     protected static \BackedEnum|string|null $navigationIcon = 'heroicon-o-document-text';
 
-    protected static UnitEnum|string|null $navigationGroup = 'Content Management';
+    protected static \UnitEnum|string|null $navigationGroup = 'Content Management';
 
     protected static ?int $navigationSort = 2;
 
