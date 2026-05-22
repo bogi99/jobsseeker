@@ -3,15 +3,38 @@
 namespace Tests\Feature;
 
 use App\Filament\Customer\Resources\PostResource\Pages\CreatePost;
+use App\Filament\Customer\Resources\PostResource\Pages\EditPost;
 use App\Models\Post;
+use App\Models\Transaction;
 use App\Models\User;
+use App\Models\UserType;
+use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
+use Stripe\StripeClient;
 use Tests\TestCase;
 
 class PaidPostFlowTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_customer_posts_index_renders_for_authenticated_user()
+    {
+        $customerType = UserType::where('name', 'customer')->firstOrFail();
+
+        $user = User::factory()->create(['usertype_id' => $customerType->id]);
+        $post = Post::factory()->create([
+            'user_id' => $user->id,
+            'title' => 'Visible customer post',
+        ]);
+
+        $this->actingAs($user, 'web');
+        Filament::auth()->login($user);
+
+        $this->get('/customer/posts')
+            ->assertOk()
+            ->assertSee($post->title);
+    }
 
     public function test_paid_create_redirects_to_checkout_and_post_pending()
     {
@@ -58,7 +81,7 @@ class PaidPostFlowTest extends TestCase
                 $this->checkout = $checkout;
             }
         };
-        $this->app->instance(\Stripe\StripeClient::class, $mockClient);
+        $this->app->instance(StripeClient::class, $mockClient);
 
         Livewire::test(CreatePost::class)
             ->fillForm([
@@ -121,7 +144,7 @@ class PaidPostFlowTest extends TestCase
                 $this->checkout = $checkout;
             }
         };
-        $this->app->instance(\Stripe\StripeClient::class, $mockClient);
+        $this->app->instance(StripeClient::class, $mockClient);
 
         $post = Post::factory()->create([
             'user_id' => $user->id,
@@ -131,7 +154,7 @@ class PaidPostFlowTest extends TestCase
             'payment_status' => 'pending',
         ]);
 
-        Livewire::test(\App\Filament\Customer\Resources\PostResource\Pages\EditPost::class, ['record' => $post->id])
+        Livewire::test(EditPost::class, ['record' => $post->id])
             ->fillForm([
                 'title' => 'Edited title',
                 'content' => 'Edited content',
@@ -165,7 +188,7 @@ class PaidPostFlowTest extends TestCase
             'payment_status' => 'pending',
         ]);
 
-        Livewire::test(\App\Filament\Customer\Resources\PostResource\Pages\EditPost::class, ['record' => $post->id])
+        Livewire::test(EditPost::class, ['record' => $post->id])
             ->fillForm([
                 'title' => 'Hosted edit',
                 'content' => 'Hosted content',
@@ -194,7 +217,7 @@ class PaidPostFlowTest extends TestCase
             'payment_status' => 'paid',
         ]);
 
-        Livewire::test(\App\Filament\Customer\Resources\PostResource\Pages\EditPost::class, ['record' => $post->id])
+        Livewire::test(EditPost::class, ['record' => $post->id])
             ->assertDontSee('Pay & Save')
             ->assertDontSee('Pay + Boost')
             ->assertDontSee('Pay to post')
@@ -283,7 +306,7 @@ class PaidPostFlowTest extends TestCase
         };
 
         // Bind this mock client so the controller uses it when attempting retrieval.
-        $this->app->instance(\Stripe\StripeClient::class, $mockClient);
+        $this->app->instance(StripeClient::class, $mockClient);
 
         $this->postJson(route('webhooks.stripe'), json_decode(json_encode($eventNoMeta), true))
             ->assertStatus(200);
@@ -348,7 +371,7 @@ class PaidPostFlowTest extends TestCase
         };
 
         // Bind mock client into the container so both page and webhook use the same client.
-        $this->app->instance(\Stripe\StripeClient::class, $mockClient);
+        $this->app->instance(StripeClient::class, $mockClient);
 
         // Trigger the Create & Pay flow
         Livewire::test(CreatePost::class)
@@ -371,12 +394,12 @@ class PaidPostFlowTest extends TestCase
         $this->assertEquals('pi_test_tx', $post->payment_intent_id);
 
         // Ensure a transaction record was created for this pending purchase
-        $tx = \App\Models\Transaction::where('post_id', $post->id)->first();
+        $tx = Transaction::where('post_id', $post->id)->first();
 
         $this->assertNotNull($tx);
         $this->assertEquals('cs_test_123', $tx->stripe_session_id);
         $this->assertEquals('pi_test_tx', $tx->payment_intent_id);
-        $this->assertEquals(\App\Models\Transaction::STATUS_PENDING, $tx->status);
+        $this->assertEquals(Transaction::STATUS_PENDING, $tx->status);
 
         // Simulate webhook with missing metadata; controller should match by stripe_session_id
         $eventNoMeta = (object) [
@@ -437,7 +460,7 @@ class PaidPostFlowTest extends TestCase
             }
         };
 
-        $this->app->instance(\Stripe\StripeClient::class, $mockClient2);
+        $this->app->instance(StripeClient::class, $mockClient2);
 
         $this->postJson(route('webhooks.stripe'), json_decode(json_encode($eventNoMeta), true))
             ->assertStatus(200);
@@ -452,7 +475,7 @@ class PaidPostFlowTest extends TestCase
         // Transaction should be marked completed
         $this->assertDatabaseHas('transactions', [
             'id' => $tx->id,
-            'status' => \App\Models\Transaction::STATUS_COMPLETED,
+            'status' => Transaction::STATUS_COMPLETED,
         ]);
     }
 
@@ -470,12 +493,12 @@ class PaidPostFlowTest extends TestCase
         ]);
 
         // Create a pending transaction with no stripe identifiers (hosted link flow)
-        $tx = \App\Models\Transaction::factory()->create([
+        $tx = Transaction::factory()->create([
             'user_id' => $user->id,
             'post_id' => $post->id,
             'stripe_session_id' => null,
             'payment_intent_id' => null,
-            'status' => \App\Models\Transaction::STATUS_PENDING,
+            'status' => Transaction::STATUS_PENDING,
             'expires_at' => now()->addDays(3),
         ]);
 
@@ -505,7 +528,7 @@ class PaidPostFlowTest extends TestCase
 
         $this->assertDatabaseHas('transactions', [
             'id' => $tx->id,
-            'status' => \App\Models\Transaction::STATUS_COMPLETED,
+            'status' => Transaction::STATUS_COMPLETED,
         ]);
     }
 
@@ -515,7 +538,7 @@ class PaidPostFlowTest extends TestCase
         $user = User::factory()->create(['is_free' => false]);
 
         // Create an existing pending transaction for this user
-        \App\Models\Transaction::factory()->create(['user_id' => $user->id, 'status' => \App\Models\Transaction::STATUS_PENDING]);
+        Transaction::factory()->create(['user_id' => $user->id, 'status' => Transaction::STATUS_PENDING]);
 
         $this->actingAs($user);
 
@@ -535,7 +558,7 @@ class PaidPostFlowTest extends TestCase
         // We expect the redirect to the posts index (notifications are delivered via Filament).
 
         $this->assertDatabaseMissing('posts', ['title' => 'Should not create']);
-        $this->assertEquals(1, \App\Models\Transaction::where('user_id', $user->id)->count());
+        $this->assertEquals(1, Transaction::where('user_id', $user->id)->count());
 
     }
 }

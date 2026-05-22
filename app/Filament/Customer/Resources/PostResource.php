@@ -4,7 +4,14 @@ namespace App\Filament\Customer\Resources;
 
 use App\Filament\Customer\Resources\PostResource\Pages;
 use App\Models\Post;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Facades\Filament;
 use Filament\Forms;
+use Filament\Navigation\NavigationItem;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -43,9 +50,10 @@ class PostResource extends Resource
                 Forms\Components\TextInput::make('title')
                     ->required()
                     ->maxLength(255),
-                Forms\Components\Textarea::make('content')
+                Forms\Components\RichEditor::make('content')
                     ->required()
-                    ->rows(5)
+                    ->label('Short Description')
+                    ->maxLength(65535)
                     ->columnSpanFull(),
                 Forms\Components\RichEditor::make('full_content')
                     ->label('Full description')
@@ -112,13 +120,18 @@ class PostResource extends Resource
                     ->trueLabel('Live')
                     ->falseLabel('Draft'),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+            ->recordActions([
+                EditAction::make(),
+                DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make()
-                    ->requiresConfirmation(),
+            ->headerActions([
+                CreateAction::make(),
+            ])
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make()
+                        ->requiresConfirmation(),
+                ]),
             ])
             ->defaultSort('created_at', 'desc');
     }
@@ -137,10 +150,10 @@ class PostResource extends Resource
         $items = parent::getNavigationItems();
 
         // Add a conditional "Create free posting" shortcut under the Customer group
-        $items[] = \Filament\Navigation\NavigationItem::make('Create free posting')
+        $items[] = NavigationItem::make('Create free posting')
             ->group(static::getNavigationGroup())
             ->url(route('customer.posts.create.free'))
-            ->visible(fn (): bool => (bool) (\Filament\Facades\Filament::auth()->user()?->is_free ?? false));
+            ->visible(fn (): bool => (bool) (Filament::auth()->user()?->is_free ?? false));
 
         return $items;
     }

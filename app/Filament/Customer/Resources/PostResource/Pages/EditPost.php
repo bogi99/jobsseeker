@@ -3,15 +3,20 @@
 namespace App\Filament\Customer\Resources\PostResource\Pages;
 
 use App\Filament\Customer\Resources\PostResource;
+use App\Models\Transaction;
+use Filament\Actions\Action;
 use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Traits\Macroable;
+use Stripe\StripeClient;
 
 class EditPost extends EditRecord
 {
-    use \Illuminate\Support\Traits\Macroable;
+    use Macroable;
 
     protected static string $resource = PostResource::class;
 
@@ -40,8 +45,8 @@ class EditPost extends EditRecord
             return false;
         }
 
-        return \App\Models\Transaction::where('user_id', $user->id)
-            ->where('status', \App\Models\Transaction::STATUS_PENDING)
+        return Transaction::where('user_id', $user->id)
+            ->where('status', Transaction::STATUS_PENDING)
             ->exists();
     }
 
@@ -94,12 +99,12 @@ class EditPost extends EditRecord
         $post = $this->getRecord();
         $url = $this->getHostedUrl((bool) $boost) ?? '/';
 
-        $transaction = \App\Models\Transaction::create([
+        $transaction = Transaction::create([
             'user_id' => Auth::id(),
             'post_id' => $post->getKey(),
             'amount' => config('services.stripe.price_post'),
             'currency' => config('services.stripe.currency', 'cad'),
-            'status' => \App\Models\Transaction::STATUS_PENDING,
+            'status' => Transaction::STATUS_PENDING,
             'metadata' => ['source' => 'hosted_link'],
             'expires_at' => now()->addDays(7),
         ]);
@@ -109,7 +114,7 @@ class EditPost extends EditRecord
             $url = $url.$separator.'post_id='.$post->getKey().'&tx='.$transaction->id;
         }
 
-        \Illuminate\Support\Facades\Log::info('Redirecting to hosted Buy Link', ['post_id' => $post->getKey(), 'transaction_id' => $transaction->id, 'url' => $url]);
+        Log::info('Redirecting to hosted Buy Link', ['post_id' => $post->getKey(), 'transaction_id' => $transaction->id, 'url' => $url]);
 
         $this->redirect($url);
     }
@@ -132,7 +137,7 @@ class EditPost extends EditRecord
 
         $post = $this->getRecord();
 
-        $client = app()->make(\Stripe\StripeClient::class);
+        $client = app()->make(StripeClient::class);
 
         $amount = config('services.stripe.price_post', 5000);
         $boostAmount = config('services.stripe.price_post_boost', 9000);
@@ -159,19 +164,19 @@ class EditPost extends EditRecord
 
         $post->update(['payment_intent_id' => $session->payment_intent ?? $session->id]);
 
-        $transaction = \App\Models\Transaction::create([
+        $transaction = Transaction::create([
             'user_id' => $post->user_id,
             'post_id' => $post->getKey(),
             'stripe_session_id' => $session->id ?? null,
             'payment_intent_id' => $session->payment_intent ?? null,
             'amount' => $unitAmount,
             'currency' => config('services.stripe.currency', 'cad'),
-            'status' => \App\Models\Transaction::STATUS_PENDING,
+            'status' => Transaction::STATUS_PENDING,
             'metadata' => $metadata,
             'expires_at' => now()->addDay(),
         ]);
 
-        \Illuminate\Support\Facades\Log::info('Redirecting to Stripe Checkout URL', ['post_id' => $post->getKey(), 'session_id' => $session->id ?? null, 'url' => $session->url ?? null, 'metadata' => $metadata, 'transaction_id' => $transaction->id]);
+        Log::info('Redirecting to Stripe Checkout URL', ['post_id' => $post->getKey(), 'session_id' => $session->id ?? null, 'url' => $session->url ?? null, 'metadata' => $metadata, 'transaction_id' => $transaction->id]);
 
         $this->redirect($session->url);
     }
@@ -186,28 +191,28 @@ class EditPost extends EditRecord
         return [
             $this->getSaveFormAction(),
 
-            \Filament\Actions\Action::make('create_and_pay')
+            Action::make('create_and_pay')
                 ->label('Pay & Save')
                 ->action(fn () => $this->createAndPay(false))
                 ->visible(fn (): bool => ! Filament::auth()->user()?->is_free && (bool) config('services.stripe.key') && (! $this->getRecord() || ! $this->getRecord()->is_paid))
                 ->disabled(fn (): bool => $this->userHasPendingTransaction())
                 ->color('success'),
 
-            \Filament\Actions\Action::make('create_and_pay_boost')
+            Action::make('create_and_pay_boost')
                 ->label('Pay + Boost & Save')
                 ->action(fn () => $this->createAndPay(true))
                 ->visible(fn (): bool => ! Filament::auth()->user()?->is_free && (bool) config('services.stripe.key') && (! $this->getRecord() || ! $this->getRecord()->is_paid))
                 ->disabled(fn (): bool => $this->userHasPendingTransaction())
                 ->color('success'),
 
-            \Filament\Actions\Action::make('pay')
+            Action::make('pay')
                 ->label('Pay to post (Hosted)')
                 ->action(fn () => $this->payHosted(false))
                 ->visible(fn (): bool => ! Filament::auth()->user()?->is_free && (bool) config('services.stripe.hosted_post_url') && (! $this->getRecord() || ! $this->getRecord()->is_paid))
                 ->disabled(fn (): bool => $this->userHasPendingTransaction())
                 ->color('secondary'),
 
-            \Filament\Actions\Action::make('pay_boost')
+            Action::make('pay_boost')
                 ->label('Pay + Boost (Hosted)')
                 ->action(fn () => $this->payHosted(true))
                 ->visible(fn (): bool => ! Filament::auth()->user()?->is_free && (bool) config('services.stripe.hosted_post_boost_url') && (! $this->getRecord() || ! $this->getRecord()->is_paid))
@@ -220,6 +225,8 @@ class EditPost extends EditRecord
 
     protected function getRedirectUrl(): string
     {
-        return $this->checkoutRedirectUrl ?? parent::getRedirectUrl();
+        return $this->checkoutRedirectUrl
+            ?? parent::getRedirectUrl()
+            ?? route('filament.customer.resources.posts.index');
     }
 }

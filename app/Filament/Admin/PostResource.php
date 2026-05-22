@@ -1,16 +1,14 @@
 <?php
+
 namespace App\Filament\Admin;
-
-use Filament\Actions\ViewAction;
-use Filament\Actions\EditAction;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-
-
 
 use App\Filament\Admin\PostResource\Pages;
 use App\Models\Post;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Forms;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
@@ -118,6 +116,7 @@ class PostResource extends Resource
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\ImageColumn::make('company_logo')
+                    ->getStateUsing(fn (Post $record): ?string => $record->company_logo_url)
                     ->circular(),
                 Tables\Columns\ToggleColumn::make('is_active')
                     ->label('Active')

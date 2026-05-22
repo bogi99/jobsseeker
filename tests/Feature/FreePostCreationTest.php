@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Filament\Customer\Resources\PostResource\Pages\CreatePost;
+use App\Filament\Customer\Resources\PostResource\Pages\EditPost;
 use App\Models\Post;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -81,6 +82,41 @@ class FreePostCreationTest extends TestCase
         $this->assertDatabaseHas('posts', [
             'title' => 'Attempted free job',
             'is_free' => false,
+        ]);
+    }
+
+    public function test_free_user_can_save_existing_free_post_without_redirect_error()
+    {
+        $user = User::factory()->create(['is_free' => true]);
+        $post = Post::factory()->create([
+            'user_id' => $user->id,
+            'title' => 'Original free job title',
+            'content' => 'Original short content',
+            'is_free' => true,
+            'is_paid' => false,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($user);
+
+        Livewire::test(EditPost::class, ['record' => $post->id])
+            ->fillForm([
+                'title' => 'Updated free job title',
+                'content' => '<p>Updated short content</p>',
+                'company_name' => 'Example Co',
+                'user_id' => $user->id,
+                'is_free' => true,
+                'is_active' => true,
+            ])
+            ->call('save')
+            ->assertHasNoErrors()
+            ->assertRedirect(route('filament.customer.resources.posts.index'));
+
+        $this->assertDatabaseHas('posts', [
+            'id' => $post->id,
+            'title' => 'Updated free job title',
+            'content' => '<p>Updated short content</p>',
+            'is_free' => true,
         ]);
     }
 
