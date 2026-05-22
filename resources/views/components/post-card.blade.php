@@ -25,7 +25,8 @@
 
     <!-- Post Content Preview -->
     <p class="text-gray-700 mb-3 line-clamp-2">
-        {{ Str::limit($post->content, 150) }}
+        {{-- {{ Str::limit($post->content, 150) }} --}}
+        {!! Purifier::clean(Str::limit($post->content, 150)) !!}
     </p>
 
     <!-- Tags -->

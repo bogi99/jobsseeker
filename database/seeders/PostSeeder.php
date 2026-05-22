@@ -15,7 +15,7 @@ class PostSeeder extends Seeder
     public function run(): void
     {
         // Get all customer users (usertype_id = 3)
-        $customerUsers = User::where('usertype_id', 3)->get();
+        $customerUsers = User::where('usertype_id', '=', 3)->get();
 
         // Get all available tags
         $allTags = Tag::all();

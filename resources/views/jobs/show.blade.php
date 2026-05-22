@@ -55,14 +55,16 @@
                 <!-- Job Summary -->
                 <div class="mb-6">
                     <h3 class="text-lg font-semibold text-gray-800 mb-2">Job Summary</h3>
-                    <p class="text-gray-700 leading-relaxed">{{ $post->content }}</p>
+                    <p class="text-gray-700 leading-relaxed">
+                        {!! Purifier::clean($post->content) !!}</p>
                 </div>
 
                 <!-- Full Job Description -->
                 @if ($post->full_content)
                     <div class="mb-6">
                         <h3 class="text-lg font-semibold text-gray-800 mb-2">Full Description</h3>
-                        <div class="text-gray-700 leading-relaxed whitespace-pre-line">{{ $post->full_content }}</div>
+                        <div class="text-gray-700 leading-relaxed whitespace-pre-line">
+                            {!! Purifier::clean($post->full_content) !!}</div>
                     </div>
                 @endif
 
