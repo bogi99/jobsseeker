@@ -36,10 +36,10 @@ class PostResource extends Resource
     {
         return $schema
             ->schema([
-                Forms\Components\Placeholder::make('free_notice')
-                    ->content('You are creating a <strong>free</strong> posting. The "Paid job" option is disabled and this post will be marked as free.')
-                    ->visible(fn (): bool => (bool) request()->query('free'))
-                    ->columnSpanFull(),
+                // Forms\Components\Placeholder::make('free_notice')
+                //     ->content('You are creating a <strong>free</strong> posting. The "Paid job" option is disabled and this post will be marked as free.')
+                //     ->visible(fn (): bool => (bool) request()->query('free'))
+                //     ->columnSpanFull(),
                 // Track whether this is a free flow via session (set by middleware on the free route)
                 Forms\Components\Hidden::make('is_free')
                     ->default(fn (): bool => (bool) session('customer_free_flow', false))

@@ -22,13 +22,9 @@
                         <img src="{{ $post->company_logo_url }}" alt="{{ $post->company_name }}"
                             class="w-16 h-16 rounded-lg object-cover mr-4">
                     @else
-                        <div class="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center mr-4">
-                            <svg class="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                                <path
-                                    d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z">
-                                </path>
-                            </svg>
-                        </div>
+                        <img src="{{ asset('images/jobrat-canada_150x150.png') }}"
+                            alt="{{ $post->company_name ?: 'Jobrat Canada' }}"
+                            class="w-16 h-16 rounded-lg object-cover mr-4">
                     @endif
                     <div>
                         <h2 class="text-2xl font-semibold text-gray-800">{{ $post->company_name }}</h2>
