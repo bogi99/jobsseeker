@@ -116,4 +116,27 @@ class AdminPanelAccessTest extends TestCase
             ->assertCanSeeTableRecords([$user->posts()->latest('id')->first()])
             ->assertTableColumnStateSet('company_logo', '/storage/company-logos/test.png', $user->posts()->latest('id')->first());
     }
+
+    public function test_admin_posts_index_displays_formatted_salary_range()
+    {
+        $adminType = UserType::where('name', 'admin')->first();
+
+        /** @var User $user */
+        $user = User::factory()->createOne(['usertype_id' => $adminType->id]);
+
+        $post = Post::factory()->create([
+            'user_id' => $user->id,
+            'salary_min_amount' => 5000,
+            'salary_max_amount' => 7550,
+            'salary_currency' => 'CAD',
+            'salary_period' => 'hour',
+        ]);
+
+        $this->actingAs($user, 'web');
+        Filament::auth()->login($user);
+
+        Livewire::test(ListPosts::class)
+            ->assertCanSeeTableRecords([$post])
+            ->assertTableColumnStateSet('formatted_salary_range', 'CAD 50.00 - 75.50 Per hour', $post);
+    }
 }

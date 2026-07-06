@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Filament\Customer\Resources\PostResource\Pages\CreatePost;
 use App\Filament\Customer\Resources\PostResource\Pages\EditPost;
+use App\Filament\Customer\Resources\PostResource\Pages\ListPosts;
 use App\Models\Post;
 use App\Models\Transaction;
 use App\Models\User;
@@ -34,6 +35,31 @@ class PaidPostFlowTest extends TestCase
         $this->get('/customer/posts')
             ->assertOk()
             ->assertSee($post->title);
+    }
+
+    public function test_customer_posts_index_displays_formatted_salary_range()
+    {
+        $customerType = UserType::where('name', 'customer')->firstOrFail();
+
+        $user = User::factory()->create(['usertype_id' => $customerType->id]);
+        $post = Post::factory()->create([
+            'user_id' => $user->id,
+            'salary_min_amount' => 9000000,
+            'salary_max_amount' => 12000000,
+            'salary_currency' => 'USD',
+            'salary_period' => 'year',
+        ]);
+
+        $this->actingAs($user, 'web');
+        Filament::auth()->login($user);
+
+        $this->get('/customer/posts')
+            ->assertOk()
+            ->assertSee('USD 90,000.00 - 120,000.00 Per year');
+
+        Livewire::test(ListPosts::class)
+            ->assertCanSeeTableRecords([$post])
+            ->assertTableColumnStateSet('formatted_salary_range', 'USD 90,000.00 - 120,000.00 Per year', $post);
     }
 
     public function test_paid_create_redirects_to_checkout_and_post_pending()

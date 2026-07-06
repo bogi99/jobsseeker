@@ -4,9 +4,12 @@ namespace App\Filament\Customer\Resources\PostResource\Pages;
 
 use App\Filament\Customer\Resources\PostResource;
 use App\Models\Post;
+use App\Models\Transaction;
+use Filament\Actions\Action;
 use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Support\Facades\Log;
 use Stripe\StripeClient;
 
 class CreatePost extends CreateRecord
@@ -41,7 +44,7 @@ class CreatePost extends CreateRecord
         // the `EnsureUserHasFreeAccess` middleware, falling back to submitted form state.
         $isRequestedFree = (bool) (session('customer_free_flow', false) || ($data['is_free'] ?? false) || ($formState['is_free'] ?? false));
 
-        \Illuminate\Support\Facades\Log::info('mutateFormDataBeforeCreate', ['requestedPaid' => (bool) ($data['is_paid'] ?? false) || (bool) ($formState['is_paid'] ?? false) || $requestIsPaid, 'formState' => $formState, 'data' => $data, 'requestIsPaid' => $requestIsPaid]);
+        Log::info('mutateFormDataBeforeCreate', ['requestedPaid' => (bool) ($data['is_paid'] ?? false) || (bool) ($formState['is_paid'] ?? false) || $requestIsPaid, 'formState' => $formState, 'data' => $data, 'requestIsPaid' => $requestIsPaid]);
 
         // Clear the session marker so it doesn't affect future unrelated requests.
         if ($isRequestedFree) {
@@ -96,7 +99,7 @@ class CreatePost extends CreateRecord
         // Prefer hosted buy links only when a hosted URL is configured and we do NOT have
         // a bound Stripe client available (e.g. in tests we bind a mock client and want
         // to exercise the dynamic Checkout Session flow).
-        if (! $this->forceDynamicCheckout && ($url = $this->getHostedUrl($this->paymentBoostRequested)) && ! app()->bound(\Stripe\StripeClient::class)) {
+        if (! $this->forceDynamicCheckout && ($url = $this->getHostedUrl($this->paymentBoostRequested)) && ! app()->bound(StripeClient::class)) {
             // Optionally store a placeholder reference if needed. For now we leave it null.
             $post->update(['payment_intent_id' => null]);
 
@@ -118,10 +121,10 @@ class CreatePost extends CreateRecord
         // Build metadata and log what we're sending so we can debug missing metadata issues.
         $metadata = ['post_id' => (string) $post->getKey(), 'boost' => $this->paymentBoostRequested ? 1 : 0];
 
-        \Illuminate\Support\Facades\Log::info('Creating Stripe Checkout Session', ['post_id' => $post->getKey(), 'metadata' => $metadata, 'amount' => $unitAmount]);
+        Log::info('Creating Stripe Checkout Session', ['post_id' => $post->getKey(), 'metadata' => $metadata, 'amount' => $unitAmount]);
 
         // Log the payload we will send to Stripe so we can inspect it if metadata is missing.
-        \Illuminate\Support\Facades\Log::info('Stripe checkout payload', [
+        Log::info('Stripe checkout payload', [
             'post_id' => $post->getKey(),
             'line_items' => [[
                 'currency' => config('services.stripe.currency', 'cad'),
@@ -152,14 +155,14 @@ class CreatePost extends CreateRecord
         ]);
 
         // Save the payment reference on the transaction and the post.
-        $transaction = \App\Models\Transaction::create([
+        $transaction = Transaction::create([
             'user_id' => Filament::auth()->user()?->id,
             'post_id' => $post->getKey(),
             'stripe_session_id' => $session->id ?? null,
             'payment_intent_id' => $session->payment_intent ?? null,
             'amount' => $unitAmount,
             'currency' => config('services.stripe.currency', 'cad'),
-            'status' => \App\Models\Transaction::STATUS_PENDING,
+            'status' => Transaction::STATUS_PENDING,
             'metadata' => $metadata,
             'expires_at' => now()->addDay(),
         ]);
@@ -169,9 +172,9 @@ class CreatePost extends CreateRecord
         $this->checkoutRedirectUrl = $session->url;
 
         // Log the redirect URL so you can see the dynamic stripe link we will send the user to.
-        \Illuminate\Support\Facades\Log::info('Redirecting to Stripe Checkout URL', ['post_id' => $post->getKey(), 'session_id' => $session->id ?? null, 'url' => $this->checkoutRedirectUrl, 'transaction_id' => $transaction->id]);
+        Log::info('Redirecting to Stripe Checkout URL', ['post_id' => $post->getKey(), 'session_id' => $session->id ?? null, 'url' => $this->checkoutRedirectUrl, 'transaction_id' => $transaction->id]);
 
-        \Illuminate\Support\Facades\Log::info('Stripe Checkout Session created', ['session_id' => $session->id ?? null, 'payment_intent' => $session->payment_intent ?? null, 'url' => $session->url ?? null, 'metadata' => $metadata, 'transaction_id' => $transaction->id]);
+        Log::info('Stripe Checkout Session created', ['session_id' => $session->id ?? null, 'payment_intent' => $session->payment_intent ?? null, 'url' => $session->url ?? null, 'metadata' => $metadata, 'transaction_id' => $transaction->id]);
     }
 
     protected function getHostedUrl(bool $boost): ?string
@@ -200,8 +203,9 @@ class CreatePost extends CreateRecord
             return false;
         }
 
-        return \App\Models\Transaction::where('user_id', $user->id)
-            ->where('status', \App\Models\Transaction::STATUS_PENDING)
+        return Transaction::query()
+            ->where('user_id', $user->id)
+            ->where('status', Transaction::STATUS_PENDING)
             ->exists();
     }
 
@@ -211,7 +215,7 @@ class CreatePost extends CreateRecord
     protected function saveDraftAndRedirect(bool $boost): void
     {
         if ($this->userHasPendingTransaction()) {
-            \Illuminate\Support\Facades\Log::info('User attempted hosted purchase but already has pending transaction', ['user_id' => Filament::auth()->id()]);
+            Log::info('User attempted hosted purchase but already has pending transaction', ['user_id' => Filament::auth()->id()]);
 
             // Notify the user we blocked the action due to a pending transaction
             Notification::make()
@@ -249,6 +253,10 @@ class CreatePost extends CreateRecord
             'company_name',
             'company_logo',
             'application_link',
+            'salary_min_amount',
+            'salary_max_amount',
+            'salary_currency',
+            'salary_period',
         ])->toArray());
 
         if (! empty($state['tags'])) {
@@ -259,12 +267,12 @@ class CreatePost extends CreateRecord
 
         // Create a transaction record to represent this pending purchase. This gives us a
         // server-side handle to reconcile webhook events from static hosted links.
-        $transaction = \App\Models\Transaction::create([
+        $transaction = Transaction::create([
             'user_id' => Filament::auth()->user()?->id,
             'post_id' => $post->getKey(),
             'amount' => config('services.stripe.price_post'),
             'currency' => config('services.stripe.currency', 'cad'),
-            'status' => \App\Models\Transaction::STATUS_PENDING,
+            'status' => Transaction::STATUS_PENDING,
             'metadata' => ['source' => 'hosted_link'],
             'expires_at' => now()->addDays(7),
         ]);
@@ -277,7 +285,7 @@ class CreatePost extends CreateRecord
         }
 
         // Log the hosted buy link we will redirect to as well (best-effort fallback).
-        \Illuminate\Support\Facades\Log::info('Redirecting to hosted Buy Link', ['post_id' => $post->getKey(), 'transaction_id' => $transaction->id, 'url' => $url]);
+        Log::info('Redirecting to hosted Buy Link', ['post_id' => $post->getKey(), 'transaction_id' => $transaction->id, 'url' => $url]);
 
         // Use Livewire's redirect helper which returns a Livewire Redirector and works inside actions.
         $this->redirect($url);
@@ -297,7 +305,7 @@ class CreatePost extends CreateRecord
     {
         // Prevent creating a new checkout if the user already has a pending transaction.
         if ($this->userHasPendingTransaction()) {
-            \Illuminate\Support\Facades\Log::info('User attempted Create & Pay but already has pending transaction', ['user_id' => Filament::auth()->id()]);
+            Log::info('User attempted Create & Pay but already has pending transaction', ['user_id' => Filament::auth()->id()]);
 
             // Notify the user we blocked the action due to a pending transaction
             Notification::make()
@@ -336,6 +344,10 @@ class CreatePost extends CreateRecord
             'company_name',
             'company_logo',
             'application_link',
+            'salary_min_amount',
+            'salary_max_amount',
+            'salary_currency',
+            'salary_period',
         ])->toArray());
 
         if (! empty($state['tags'])) {
@@ -372,21 +384,21 @@ class CreatePost extends CreateRecord
         $post->update(['payment_intent_id' => $session->payment_intent ?? $session->id]);
 
         // Create a transaction record so dynamic Checkout Sessions are also reconciled reliably.
-        $transaction = \App\Models\Transaction::create([
+        $transaction = Transaction::create([
             'user_id' => $post->user_id,
             'post_id' => $post->getKey(),
             'stripe_session_id' => $session->id ?? null,
             'payment_intent_id' => $session->payment_intent ?? null,
             'amount' => $unitAmount,
             'currency' => config('services.stripe.currency', 'cad'),
-            'status' => \App\Models\Transaction::STATUS_PENDING,
+            'status' => Transaction::STATUS_PENDING,
             'metadata' => $metadata,
             'expires_at' => now()->addDay(),
         ]);
 
-        \Illuminate\Support\Facades\Log::info('Created transaction for dynamic checkout', ['post_id' => $post->getKey(), 'transaction_id' => $transaction->id ?? null, 'session_id' => $session->id ?? null]);
+        Log::info('Created transaction for dynamic checkout', ['post_id' => $post->getKey(), 'transaction_id' => $transaction->id ?? null, 'session_id' => $session->id ?? null]);
 
-        \Illuminate\Support\Facades\Log::info('Redirecting to Stripe Checkout URL', ['post_id' => $post->getKey(), 'session_id' => $session->id ?? null, 'url' => $session->url ?? null, 'metadata' => $metadata, 'transaction_id' => $transaction->id ?? null]);
+        Log::info('Redirecting to Stripe Checkout URL', ['post_id' => $post->getKey(), 'session_id' => $session->id ?? null, 'url' => $session->url ?? null, 'metadata' => $metadata, 'transaction_id' => $transaction->id ?? null]);
 
         $this->redirect($session->url);
     }
@@ -394,7 +406,7 @@ class CreatePost extends CreateRecord
     /**
      * Add the pay buttons inline with the form actions so they appear next to Create / Create another / Cancel.
      *
-     * @return array<int, \Filament\Actions\Action>
+     * @return array<int, Action>
      */
     protected function getFormActions(): array
     {
@@ -403,14 +415,14 @@ class CreatePost extends CreateRecord
             $this->getCreateFormAction(),
 
             // Dynamic Checkout Sessions (create & pay) — preferred for automatic activation via webhook
-            \Filament\Actions\Action::make('create_and_pay')
+            Action::make('create_and_pay')
                 ->label('Create & Pay')
                 ->action(fn () => $this->createAndPay(false))
                 ->visible(fn (): bool => ! Filament::auth()->user()?->is_free && (bool) config('services.stripe.key'))
                 ->disabled(fn (): bool => $this->userHasPendingTransaction())
                 ->color('success'),
 
-            \Filament\Actions\Action::make('create_and_pay_boost')
+            Action::make('create_and_pay_boost')
                 ->label('Create & Pay + Boost')
                 ->action(fn () => $this->createAndPay(true))
                 ->visible(fn (): bool => ! Filament::auth()->user()?->is_free && (bool) config('services.stripe.key'))
@@ -418,14 +430,14 @@ class CreatePost extends CreateRecord
                 ->color('success'),
 
             // Hosted buy links (legacy/static links) — fallback flow
-            \Filament\Actions\Action::make('pay')
+            Action::make('pay')
                 ->label('Pay to post (Hosted)')
                 ->action(fn () => $this->saveDraftAndRedirect(false))
                 ->visible(fn (): bool => ! Filament::auth()->user()?->is_free && (bool) config('services.stripe.hosted_post_url'))
                 ->disabled(fn (): bool => $this->userHasPendingTransaction())
                 ->color('secondary'),
 
-            \Filament\Actions\Action::make('pay_boost')
+            Action::make('pay_boost')
                 ->label('Pay + Boost (Hosted)')
                 ->action(fn () => $this->saveDraftAndRedirect(true))
                 ->visible(fn (): bool => ! Filament::auth()->user()?->is_free && (bool) config('services.stripe.hosted_post_boost_url'))

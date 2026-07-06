@@ -3,6 +3,8 @@
 namespace App\Filament\Customer\Resources;
 
 use App\Filament\Customer\Resources\PostResource\Pages;
+use App\Models\Enums\SalaryCurrency;
+use App\Models\Enums\SalaryPeriod;
 use App\Models\Post;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
@@ -35,6 +37,7 @@ class PostResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema
+            ->columns(2)
             ->schema([
                 // Forms\Components\Placeholder::make('free_notice')
                 //     ->content('You are creating a <strong>free</strong> posting. The "Paid job" option is disabled and this post will be marked as free.')
@@ -49,15 +52,7 @@ class PostResource extends Resource
                     ->required(),
                 Forms\Components\TextInput::make('title')
                     ->required()
-                    ->maxLength(255),
-                Forms\Components\RichEditor::make('content')
-                    ->required()
-                    ->label('Short Description')
-                    ->maxLength(65535)
-                    ->columnSpanFull(),
-                Forms\Components\RichEditor::make('full_content')
-                    ->label('Full description')
-                    ->nullable()
+                    ->maxLength(255)
                     ->columnSpanFull(),
                 Section::make('Company information')
                     ->schema([
@@ -76,6 +71,87 @@ class PostResource extends Resource
                             ->label('Application URL'),
                     ])
                     ->columns(2),
+
+                Section::make('Compensation')
+                    ->schema([
+                        Forms\Components\TextInput::make('salary_min_amount')
+                            ->label('Minimum salary')
+                            ->numeric()
+                            ->inputMode('decimal')
+                            ->step('0.01')
+                            ->minValue(0)
+                            ->rule('required_with:salary_max_amount,salary_currency,salary_period')
+                            ->rule(function ($get): \Closure {
+                                return function (string $attribute, $value, \Closure $fail) use ($get): void {
+                                    $maximum = $get('salary_max_amount');
+
+                                    if (blank($value) || blank($maximum)) {
+                                        return;
+                                    }
+
+                                    if ((float) $value > (float) $maximum) {
+                                        $fail('The minimum salary must be less than or equal to the maximum salary.');
+                                    }
+                                };
+                            })
+                            ->afterStateHydrated(function (Forms\Components\TextInput $component, $state): void {
+                                if ($state === null) {
+                                    return;
+                                }
+
+                                $component->state(number_format($state / 100, 2, '.', ''));
+                            })
+                            ->dehydrateStateUsing(fn ($state): ?int => filled($state) ? (int) round(((float) $state) * 100) : null),
+                        Forms\Components\TextInput::make('salary_max_amount')
+                            ->label('Maximum salary')
+                            ->numeric()
+                            ->inputMode('decimal')
+                            ->step('0.01')
+                            ->minValue(0)
+                            ->rule('required_with:salary_min_amount,salary_currency,salary_period')
+                            ->rule(function ($get): \Closure {
+                                return function (string $attribute, $value, \Closure $fail) use ($get): void {
+                                    $minimum = $get('salary_min_amount');
+
+                                    if (blank($value) || blank($minimum)) {
+                                        return;
+                                    }
+
+                                    if ((float) $value < (float) $minimum) {
+                                        $fail('The maximum salary must be greater than or equal to the minimum salary.');
+                                    }
+                                };
+                            })
+                            ->afterStateHydrated(function (Forms\Components\TextInput $component, $state): void {
+                                if ($state === null) {
+                                    return;
+                                }
+
+                                $component->state(number_format($state / 100, 2, '.', ''));
+                            })
+                            ->dehydrateStateUsing(fn ($state): ?int => filled($state) ? (int) round(((float) $state) * 100) : null),
+                        Forms\Components\Select::make('salary_currency')
+                            ->label('Currency')
+                            ->options(SalaryCurrency::options())
+                            ->native(false)
+                            ->rule('required_with:salary_min_amount,salary_max_amount,salary_period'),
+                        Forms\Components\Select::make('salary_period')
+                            ->label('Period')
+                            ->options(SalaryPeriod::options())
+                            ->native(false)
+                            ->rule('required_with:salary_min_amount,salary_max_amount,salary_currency'),
+                    ])
+                    ->columns(2),
+
+                Forms\Components\RichEditor::make('content')
+                    ->required()
+                    ->label('Short Description')
+                    ->maxLength(65535)
+                    ->columnSpanFull(),
+                Forms\Components\RichEditor::make('full_content')
+                    ->label('Full description')
+                    ->nullable()
+                    ->columnSpanFull(),
 
                 Forms\Components\Select::make('tags')
                     ->relationship('tags', 'name')
@@ -100,6 +176,11 @@ class PostResource extends Resource
                     ->sortable()
                     ->searchable()
                     ->wrap(),
+                Tables\Columns\TextColumn::make('formatted_salary_range')
+                    ->label('Compensation')
+                    ->placeholder('Not specified')
+                    ->wrap()
+                    ->toggleable(),
                 Tables\Columns\BadgeColumn::make('is_active')
                     ->label('Status')
                     ->formatStateUsing(fn ($state): string => $state ? 'Live' : 'Draft')

@@ -4,7 +4,7 @@
             <div class="max-w-4xl mx-auto">
                 <div class="mb-8 text-center">
                     <h1 class="text-4xl font-bold">Terms of Service</h1>
-                    <p class="mt-2 text-lg text-slate-700">Last updated: [Date]</p>
+                    <p class="mt-2 text-lg text-slate-700">Last updated: 2026/05/01</p>
                 </div>
 
                 <div class="rounded-3xl bg-white p-8 shadow-lg border border-slate-200">
@@ -29,7 +29,7 @@
                     <section class="mb-8">
                         <h2 class="text-2xl font-semibold mb-4 text-slate-900">4. Termination</h2>
                         <p class="text-slate-700 mb-4">We may suspend or terminate your access to the service at any
-                            time, for any reason.</p>
+                            time, for any reason. No refunds.</p>
                     </section>
 
                     <section class="mb-8">
@@ -40,13 +40,14 @@
 
                     <section class="mb-8">
                         <h2 class="text-2xl font-semibold mb-4 text-slate-900">6. Governing Law</h2>
-                        <p class="text-slate-700 mb-4">These terms are governed by the laws of [Your State/Country].</p>
+                        <p class="text-slate-700 mb-4">These terms are governed by the laws of Canada🇨🇦.</p>
                     </section>
 
                     <section class="mb-8">
                         <h2 class="text-2xl font-semibold mb-4 text-slate-900">7. Contact Us</h2>
                         <p class="text-slate-700 mb-4">If you have any questions about these terms, please contact us at
-                            [Your Contact Information].</p>
+                            <a href="mailto:info@jobrat.ca" class="text-blue-500">info@jobrat.ca</a>.
+                        </p>
                     </section>
                 </div>
             </div>

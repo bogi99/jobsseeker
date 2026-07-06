@@ -24,6 +24,22 @@ class JobsPageKeywordsTest extends TestCase
         $response->assertSee(asset('images/jobrat-canada_150x150.png'));
     }
 
+    public function test_jobs_index_displays_formatted_salary_range_when_present(): void
+    {
+        Post::factory()->create([
+            'is_active' => true,
+            'salary_min_amount' => 5000,
+            'salary_max_amount' => 7550,
+            'salary_currency' => 'CAD',
+            'salary_period' => 'hour',
+        ]);
+
+        $response = $this->get('/jobs');
+
+        $response->assertStatus(200);
+        $response->assertSee('CAD 50.00 - 75.50 Per hour');
+    }
+
     public function test_jobs_index_includes_tag_names_in_keywords_meta(): void
     {
         $tag = Tag::create(['name' => 'Remote', 'slug' => 'remote']);
@@ -64,5 +80,21 @@ class JobsPageKeywordsTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee(asset('images/jobrat-canada_150x150.png'));
+    }
+
+    public function test_jobs_show_displays_formatted_salary_range_when_present(): void
+    {
+        $post = Post::factory()->create([
+            'is_active' => true,
+            'salary_min_amount' => 9000000,
+            'salary_max_amount' => 12000000,
+            'salary_currency' => 'USD',
+            'salary_period' => 'year',
+        ]);
+
+        $response = $this->get('/jobs/'.$post->id);
+
+        $response->assertStatus(200);
+        $response->assertSee('USD 90,000.00 - 120,000.00 Per year');
     }
 }

@@ -48,6 +48,13 @@
                     @endif
                 </div>
 
+                @if ($post->formatted_salary_range)
+                    <div class="mb-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2">Compensation</h3>
+                        <p class="text-emerald-700 font-medium">{{ $post->formatted_salary_range }}</p>
+                    </div>
+                @endif
+
                 <!-- Job Summary -->
                 <div class="mb-6">
                     <h3 class="text-lg font-semibold text-gray-800 mb-2">Job Summary</h3>

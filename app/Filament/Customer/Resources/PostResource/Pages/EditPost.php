@@ -45,7 +45,8 @@ class EditPost extends EditRecord
             return false;
         }
 
-        return Transaction::where('user_id', $user->id)
+        return Transaction::query()
+            ->where('user_id', $user->id)
             ->where('status', Transaction::STATUS_PENDING)
             ->exists();
     }
@@ -71,6 +72,10 @@ class EditPost extends EditRecord
                 'company_name',
                 'company_logo',
                 'application_link',
+                'salary_min_amount',
+                'salary_max_amount',
+                'salary_currency',
+                'salary_period',
             ])
         ));
 

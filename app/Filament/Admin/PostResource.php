@@ -3,6 +3,8 @@
 namespace App\Filament\Admin;
 
 use App\Filament\Admin\PostResource\Pages;
+use App\Models\Enums\SalaryCurrency;
+use App\Models\Enums\SalaryPeriod;
 use App\Models\Post;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -73,6 +75,77 @@ class PostResource extends Resource
                     ])
                     ->columns(2),
 
+                Section::make('Compensation')
+                    ->schema([
+                        Forms\Components\TextInput::make('salary_min_amount')
+                            ->label('Minimum salary')
+                            ->numeric()
+                            ->inputMode('decimal')
+                            ->step('0.01')
+                            ->minValue(0)
+                            ->rule('required_with:salary_max_amount,salary_currency,salary_period')
+                            ->rule(function ($get): \Closure {
+                                return function (string $attribute, $value, \Closure $fail) use ($get): void {
+                                    $maximum = $get('salary_max_amount');
+
+                                    if (blank($value) || blank($maximum)) {
+                                        return;
+                                    }
+
+                                    if ((float) $value > (float) $maximum) {
+                                        $fail('The minimum salary must be less than or equal to the maximum salary.');
+                                    }
+                                };
+                            })
+                            ->afterStateHydrated(function (Forms\Components\TextInput $component, $state): void {
+                                if ($state === null) {
+                                    return;
+                                }
+
+                                $component->state(number_format($state / 100, 2, '.', ''));
+                            })
+                            ->dehydrateStateUsing(fn ($state): ?int => filled($state) ? (int) round(((float) $state) * 100) : null),
+                        Forms\Components\TextInput::make('salary_max_amount')
+                            ->label('Maximum salary')
+                            ->numeric()
+                            ->inputMode('decimal')
+                            ->step('0.01')
+                            ->minValue(0)
+                            ->rule('required_with:salary_min_amount,salary_currency,salary_period')
+                            ->rule(function ($get): \Closure {
+                                return function (string $attribute, $value, \Closure $fail) use ($get): void {
+                                    $minimum = $get('salary_min_amount');
+
+                                    if (blank($value) || blank($minimum)) {
+                                        return;
+                                    }
+
+                                    if ((float) $value < (float) $minimum) {
+                                        $fail('The maximum salary must be greater than or equal to the minimum salary.');
+                                    }
+                                };
+                            })
+                            ->afterStateHydrated(function (Forms\Components\TextInput $component, $state): void {
+                                if ($state === null) {
+                                    return;
+                                }
+
+                                $component->state(number_format($state / 100, 2, '.', ''));
+                            })
+                            ->dehydrateStateUsing(fn ($state): ?int => filled($state) ? (int) round(((float) $state) * 100) : null),
+                        Forms\Components\Select::make('salary_currency')
+                            ->label('Currency')
+                            ->options(SalaryCurrency::options())
+                            ->native(false)
+                            ->rule('required_with:salary_min_amount,salary_max_amount,salary_period'),
+                        Forms\Components\Select::make('salary_period')
+                            ->label('Period')
+                            ->options(SalaryPeriod::options())
+                            ->native(false)
+                            ->rule('required_with:salary_min_amount,salary_max_amount,salary_currency'),
+                    ])
+                    ->columns(2),
+
                 Section::make('Tags')
                     ->schema([
                         Forms\Components\Select::make('tags')
@@ -115,6 +188,11 @@ class PostResource extends Resource
                 Tables\Columns\TextColumn::make('company_name')
                     ->searchable()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('formatted_salary_range')
+                    ->label('Compensation')
+                    ->placeholder('Not specified')
+                    ->wrap()
+                    ->toggleable(),
                 Tables\Columns\ImageColumn::make('company_logo')
                     ->getStateUsing(fn (Post $record): ?string => $record->company_logo_url)
                     ->circular(),
@@ -159,12 +237,18 @@ class PostResource extends Resource
                     ->trueLabel('Featured only')
                     ->falseLabel('Not featured'),
             ])
-            ->actions([
-                ViewAction::make(),
-                EditAction::make(),
-                DeleteAction::make(),
+            ->recordActions([
+                ViewAction::make()
+                    ->iconButton()
+                    ->hiddenLabel(),
+                EditAction::make()
+                    ->iconButton()
+                    ->hiddenLabel(),
+                DeleteAction::make()
+                    ->iconButton()
+                    ->hiddenLabel(),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make()
                         ->requiresConfirmation(),

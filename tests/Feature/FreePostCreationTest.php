@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Filament\Customer\Resources\PostResource\Pages\CreatePost;
 use App\Filament\Customer\Resources\PostResource\Pages\EditPost;
+use App\Models\Enums\SalaryCurrency;
+use App\Models\Enums\SalaryPeriod;
 use App\Models\Post;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -37,6 +39,10 @@ class FreePostCreationTest extends TestCase
                 'title' => 'Free job title',
                 'content' => 'Short content',
                 'company_name' => 'Example Co',
+                'salary_min_amount' => '50.00',
+                'salary_max_amount' => '75.50',
+                'salary_currency' => SalaryCurrency::CAD->value,
+                'salary_period' => SalaryPeriod::Hour->value,
                 'user_id' => $user->id,
                 'is_free' => true,
                 'is_active' => true,
@@ -49,7 +55,16 @@ class FreePostCreationTest extends TestCase
             'user_id' => $user->id,
             'is_free' => true,
             'is_paid' => false,
+            'salary_min_amount' => 5000,
+            'salary_max_amount' => 7550,
+            'salary_currency' => SalaryCurrency::CAD->value,
+            'salary_period' => SalaryPeriod::Hour->value,
         ]);
+
+        $post = Post::query()->where('title', 'Free job title')->firstOrFail();
+
+        $this->assertSame(SalaryCurrency::CAD, $post->salary_currency);
+        $this->assertSame(SalaryPeriod::Hour, $post->salary_period);
     }
 
     public function test_non_free_user_cannot_create_free_post()
@@ -117,6 +132,38 @@ class FreePostCreationTest extends TestCase
             'title' => 'Updated free job title',
             'content' => '<p>Updated short content</p>',
             'is_free' => true,
+        ]);
+    }
+
+    public function test_free_user_cannot_create_post_with_min_salary_greater_than_max_salary()
+    {
+        $user = User::factory()->create(['is_free' => true]);
+
+        $this->actingAs($user);
+        $this->get(route('customer.posts.create.free'));
+        $this->get(route('filament.customer.resources.posts.create'));
+
+        Livewire::test(CreatePost::class)
+            ->fillForm([
+                'title' => 'Invalid salary job',
+                'content' => 'Short content',
+                'company_name' => 'Example Co',
+                'salary_min_amount' => '90.00',
+                'salary_max_amount' => '50.00',
+                'salary_currency' => SalaryCurrency::CAD->value,
+                'salary_period' => SalaryPeriod::Hour->value,
+                'user_id' => $user->id,
+                'is_free' => true,
+                'is_active' => true,
+            ])
+            ->call('create')
+            ->assertHasFormErrors([
+                'salary_min_amount',
+                'salary_max_amount',
+            ]);
+
+        $this->assertDatabaseMissing('posts', [
+            'title' => 'Invalid salary job',
         ]);
     }
 

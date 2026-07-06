@@ -18,6 +18,10 @@
     <!-- Post Title -->
     <h3 class="text-xl font-semibold text-gray-800 mb-2">{{ $post->title }}</h3>
 
+    @if ($post->formatted_salary_range)
+        <p class="text-sm font-medium text-emerald-700 mb-2">{{ $post->formatted_salary_range }}</p>
+    @endif
+
     <!-- Post Content Preview -->
     <p class="text-gray-700 mb-3 line-clamp-2">
         {{-- {{ Str::limit($post->content, 150) }} --}}

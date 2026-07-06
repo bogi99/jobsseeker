@@ -2,15 +2,20 @@
 
 namespace App\Models;
 
+use App\Models\Enums\SalaryCurrency;
+use App\Models\Enums\SalaryPeriod;
+use Database\Factories\PostFactory;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class Post extends Model
 {
-    /** @use HasFactory<\Database\Factories\PostFactory> */
+    /** @use HasFactory<PostFactory> */
     use HasFactory;
 
     /**
@@ -36,6 +41,10 @@ class Post extends Model
         'company_name',
         'company_logo',
         'application_link',
+        'salary_min_amount',
+        'salary_max_amount',
+        'salary_currency',
+        'salary_period',
     ];
 
     /**
@@ -52,6 +61,10 @@ class Post extends Model
         'published_at' => 'datetime',
         'expires_at' => 'datetime',
         'paused_remaining_seconds' => 'integer',
+        'salary_min_amount' => 'integer',
+        'salary_max_amount' => 'integer',
+        'salary_currency' => SalaryCurrency::class,
+        'salary_period' => SalaryPeriod::class,
     ];
 
     /**
@@ -60,6 +73,32 @@ class Post extends Model
     protected $appends = [
         'company_logo_url',
     ];
+
+    public function hasSalaryRange(): bool
+    {
+        return ($this->salary_min_amount !== null)
+            && ($this->salary_max_amount !== null)
+            && ($this->salary_currency !== null)
+            && ($this->salary_period !== null);
+    }
+
+    public function getFormattedSalaryRangeAttribute(): ?string
+    {
+        if (! $this->hasSalaryRange()) {
+            return null;
+        }
+
+        $currency = $this->salary_currency?->value;
+        $period = $this->salary_period?->label();
+        $minimum = $this->formatSalaryAmount($this->salary_min_amount);
+        $maximum = $this->formatSalaryAmount($this->salary_max_amount);
+
+        $range = $minimum === $maximum
+            ? "{$currency} {$minimum}"
+            : "{$currency} {$minimum} - {$maximum}";
+
+        return "{$range} {$period}";
+    }
 
     /**
      * Get the user that owns the post.
@@ -75,6 +114,11 @@ class Post extends Model
     public function tags(): BelongsToMany
     {
         return $this->belongsToMany(Tag::class);
+    }
+
+    protected function formatSalaryAmount(int $amount): string
+    {
+        return number_format($amount / 100, 2, '.', ',');
     }
 
     public function getCompanyLogoUrlAttribute(): ?string
@@ -203,7 +247,7 @@ class Post extends Model
         }
 
         // Perform a direct DB update to avoid observer recursion and ensure values are persisted atomically.
-        \Illuminate\Support\Facades\DB::table('posts')
+        DB::table('posts')
             ->where('id', $this->id)
             ->update([
                 'is_active' => false,
@@ -242,7 +286,7 @@ class Post extends Model
         }
 
         // For paid posts without paused time, reactivation requires valid paid state and won't be allowed here.
-        throw new \Illuminate\Auth\Access\AuthorizationException('Reactivation requires payment');
+        throw new AuthorizationException('Reactivation requires payment');
     }
 
     public function isExpired(): bool

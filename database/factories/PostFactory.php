@@ -2,10 +2,12 @@
 
 namespace Database\Factories;
 
+use App\Models\Post;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Post>
+ * @extends Factory<Post>
  */
 class PostFactory extends Factory
 {
@@ -17,7 +19,7 @@ class PostFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id' => \App\Models\User::factory(),
+            'user_id' => User::factory(),
             'title' => $this->faker->sentence(6),
             'content' => $this->faker->paragraph(),
             'full_content' => null,
@@ -28,6 +30,10 @@ class PostFactory extends Factory
             'payment_status' => 'pending',
             'payment_intent_id' => null,
             'company_name' => $this->faker->company(),
+            'salary_min_amount' => null,
+            'salary_max_amount' => null,
+            'salary_currency' => null,
+            'salary_period' => null,
         ];
     }
 }
