@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>{{ config('app.name', 'Laravel') }}</title>
+    <title>{{ config('app.name'.' - The best place to post and find jobs.', 'Laravel') }}</title>
     <meta name="description"
         content="JobRat - The best place to post and find jobs. Connect with top employers and discover your next career opportunity today! Simple and easy to use.">
     <meta name="author" content="JobRat">
