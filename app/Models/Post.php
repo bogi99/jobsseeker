@@ -147,9 +147,9 @@ class Post extends Model
      * Normalize and persist the `application_link` value.
      *
      * Behavior:
-     * - Ensure mailto links are stored using `mailto://` (user requested visual distinction)
+     * - Ensure mailto links are stored using `mailto:`
      * - Preserve other schemes (http(s):) as provided
-     * - Convert plain emails to `mailto://{email}`
+     * - Convert plain emails to `mailto:{email}`
      * - Prepend `https://` for bare hostnames/URLs without a scheme
      */
     public function setApplicationLinkAttribute(?string $value): void
@@ -162,9 +162,9 @@ class Post extends Model
 
         $value = trim($value);
 
-        // Normalize any mailto variant to use double-slash form `mailto://`
+        // Normalize any mailto variant to use standard `mailto:` form
         if (preg_match('/^mailto:(?:\/\/)?/i', $value)) {
-            $value = preg_replace('/^mailto:(?:\/\/)?/i', 'mailto://', $value);
+            $value = preg_replace('/^mailto:(?:\/\/)?/i', 'mailto:', $value);
 
             $this->attributes['application_link'] = $value;
 
@@ -178,15 +178,27 @@ class Post extends Model
             return;
         }
 
-        // If it looks like an email address, convert to mailto://
+        // If it looks like an email address, convert to mailto:
         if (str_contains($value, '@')) {
-            $this->attributes['application_link'] = 'mailto://'.$value;
+            $this->attributes['application_link'] = 'mailto:'.$value;
 
             return;
         }
 
         // Otherwise assume it's a website and prepend https://
         $this->attributes['application_link'] = 'https://'.$value;
+    }
+
+    /**
+     * Normalize legacy stored values when reading.
+     */
+    public function getApplicationLinkAttribute(?string $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        return preg_replace('/^mailto:\/\//i', 'mailto:', $value);
     }
 
     /**

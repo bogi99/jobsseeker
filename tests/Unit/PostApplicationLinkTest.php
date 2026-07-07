@@ -4,22 +4,23 @@ namespace Tests\Unit;
 
 use App\Models\Post;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class PostApplicationLinkTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_mailto_values_are_saved_with_double_slash(): void
+    public function test_mailto_values_are_saved_with_standard_scheme(): void
     {
         $p1 = Post::factory()->create(['application_link' => 'mailto://hay@samkhangyi.com']);
-        $this->assertSame('mailto://hay@samkhangyi.com', $p1->fresh()->application_link);
+        $this->assertSame('mailto:hay@samkhangyi.com', $p1->fresh()->application_link);
 
         $p2 = Post::factory()->create(['application_link' => 'mailto:foo@bar.com']);
-        $this->assertSame('mailto://foo@bar.com', $p2->fresh()->application_link);
+        $this->assertSame('mailto:foo@bar.com', $p2->fresh()->application_link);
 
         $p3 = Post::factory()->create(['application_link' => 'baz@domain.test']);
-        $this->assertSame('mailto://baz@domain.test', $p3->fresh()->application_link);
+        $this->assertSame('mailto:baz@domain.test', $p3->fresh()->application_link);
     }
 
     public function test_plain_hostname_gets_https_prepended(): void
@@ -38,5 +39,18 @@ class PostApplicationLinkTest extends TestCase
         ]);
 
         $this->assertSame('https://acme.example/jobs/apply', $post->fresh()->application_link);
+    }
+
+    public function test_legacy_mailto_double_slash_values_are_normalized_on_read(): void
+    {
+        $post = Post::factory()->create([
+            'application_link' => 'https://example.com',
+        ]);
+
+        DB::table('posts')->where('id', $post->id)->update([
+            'application_link' => 'mailto://legacy@example.test',
+        ]);
+
+        $this->assertSame('mailto:legacy@example.test', $post->fresh()->application_link);
     }
 }

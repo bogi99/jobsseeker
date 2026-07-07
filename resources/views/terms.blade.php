@@ -46,7 +46,7 @@
                     <section class="mb-8">
                         <h2 class="text-2xl font-semibold mb-4 text-slate-900">7. Contact Us</h2>
                         <p class="text-slate-700 mb-4">If you have any questions about these terms, please contact us at
-                            <a href="mailto:info@jobrat.ca" class="text-blue-500">info@jobrat.ca</a>.
+                            <a href="mailto:bogi99@gmail.com" class="text-blue-500">bogi99@gmail.com</a>.
                         </p>
                     </section>
                 </div>
