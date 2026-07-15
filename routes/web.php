@@ -1,16 +1,25 @@
 <?php
 
+use App\Http\Controllers\AboutController;
 use App\Http\Controllers\Auth\CustomerLoginController;
 use App\Http\Controllers\Auth\CustomerRegistrationController;
 use App\Http\Controllers\JobsListingController;
+use App\Http\Controllers\PostPaymentController;
+use App\Http\Controllers\PrivacyController;
+use App\Http\Controllers\PublicContactController;
+use App\Http\Controllers\StripeWebhookController;
+use App\Http\Controllers\TermsController;
 use App\Http\Controllers\WelcomeController;
+use App\Http\Middleware\EnsureUserHasFreeAccess;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [WelcomeController::class, 'index'])->name('welcome');
 
 // Temporary: catch POSTs to root to detect misconfigured webhook endpoints (logs and returns 200)
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 Route::post('/', function (Request $request) {
     Log::warning('Received POST to root — likely misconfigured webhook endpoint', [
@@ -20,13 +29,16 @@ Route::post('/', function (Request $request) {
     ]);
 
     return response('OK', 200);
-})->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class);
+})->withoutMiddleware(VerifyCsrfToken::class);
 
-Route::get('/privacy', [\App\Http\Controllers\PrivacyController::class, 'index'])->name('privacy');
+Route::get('/privacy', [PrivacyController::class, 'index'])->name('privacy');
 
-Route::get('/terms', [\App\Http\Controllers\TermsController::class, 'index'])->name('terms');
+Route::get('/terms', [TermsController::class, 'index'])->name('terms');
 
-Route::get('/about', [\App\Http\Controllers\AboutController::class, 'index'])->name('about');
+Route::get('/about', [AboutController::class, 'index'])->name('about');
+
+Route::get('/contact', [PublicContactController::class, 'index'])->name('contact.form');
+Route::post('/contact', [PublicContactController::class, 'submit'])->name('contact.submit');
 
 Route::get('/customer/login', [CustomerLoginController::class, 'create'])
     ->name('filament.customer.auth.login');
@@ -43,7 +55,6 @@ Route::post('/customer/register', [CustomerRegistrationController::class, 'store
     ->name('customer.register.store');
 
 // Email verification routes (Laravel-style)
-use Illuminate\Foundation\Auth\EmailVerificationRequest;
 
 Route::get('/email/verify', function () {
     return view('auth.verify-email');
@@ -70,24 +81,24 @@ Route::get('/jobs/{post}', [JobsListingController::class, 'show'])->name('jobs.s
 Route::get('/customer/create', function () {
     // Redirect explicitly to the customer panel's create route (avoid defaulting to admin)
     return redirect()->route('filament.customer.resources.posts.create');
-})->middleware(['auth', \App\Http\Middleware\EnsureUserHasFreeAccess::class])
+})->middleware(['auth', EnsureUserHasFreeAccess::class])
     ->name('customer.posts.create.free');
 
 // Stripe webhook (no CSRF)
-Route::post('/webhooks/stripe', [\App\Http\Controllers\StripeWebhookController::class, 'handle'])
-    ->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class)
+Route::post('/webhooks/stripe', [StripeWebhookController::class, 'handle'])
+    ->withoutMiddleware(VerifyCsrfToken::class)
     ->name('webhooks.stripe');
 
 // Helpful fallback to catch non-POST deliveries (Stripe mistakenly configured or manual checks).
 // Only accept non-POST methods on the fallback route so real webhooks (POST) are handled
 // by the dedicated controller above. The fallback will help diagnose misconfigured
 // webhook endpoints when Stripe uses the wrong HTTP method.
-Route::match(['get', 'head', 'put', 'patch', 'delete', 'options'], '/webhooks/stripe', function (\Illuminate\Http\Request $request) {
-    \Illuminate\Support\Facades\Log::warning('Webhook endpoint received non-POST request', ['method' => $request->method(), 'ip' => $request->ip()]);
+Route::match(['get', 'head', 'put', 'patch', 'delete', 'options'], '/webhooks/stripe', function (Request $request) {
+    Log::warning('Webhook endpoint received non-POST request', ['method' => $request->method(), 'ip' => $request->ip()]);
 
     return response('Method not allowed. Stripe webhooks must POST to this endpoint.', 405);
 });
 
 // Payment success callback - verify Stripe session and activate post if possible
-Route::get('/posts/payment/success', [\App\Http\Controllers\PostPaymentController::class, 'success'])
+Route::get('/posts/payment/success', [PostPaymentController::class, 'success'])
     ->name('posts.payment.success');

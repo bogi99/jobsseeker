@@ -43,8 +43,8 @@
                             <h2 class="text-2xl font-semibold mb-4 text-slate-900">Get In Touch</h2>
                             <p class="text-slate-700 mb-4">
                                 Have questions or feedback? We'd love to hear from you.
-                                Contact us at <a href="mailto:info@jobrat.ca"
-                                    class="text-sky-600 hover:underline">info@jobrat.ca</a>
+                                Contact us via our <a href="{{ route('contact.form') }}"
+                                    class="text-sky-600 hover:underline">Contact Form</a>
                             </p>
                         </section>
                     </div>
