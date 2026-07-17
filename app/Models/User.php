@@ -2,10 +2,14 @@
 
 namespace App\Models;
 
+use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 use Illuminate\Auth\MustVerifyEmail as MustVerifyEmailTrait;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Prunable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -13,10 +17,11 @@ use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+    /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
     use MustVerifyEmailTrait;
+    use Prunable;
 
     /**
      * The attributes that are mass assignable.
@@ -75,7 +80,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     /**
      * Check if the user can access the Filament admin panel.
      */
-    public function canAccessPanel(\Filament\Panel $panel): bool
+    public function canAccessPanel(Panel $panel): bool
     {
         if ($panel->getId() === 'admin') {
             return $this->isAdmin() || $this->isSuperAdmin();
@@ -118,5 +123,13 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     public function isFree(): bool
     {
         return (bool) $this->is_free;
+    }
+
+    /**
+     * Determine if the model should be pruned.
+     */
+    public function prunable(): Builder
+    {
+        return static::whereNull('email_verified_at')->where('created_at', '<=', now()->subDays(30));
     }
 }
